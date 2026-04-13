@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="root">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -36,22 +36,36 @@
     --shadow-lg: 0 12px 32px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.06);
   }
 
+
+  .theme-btn {
+    padding: 5px 12px; border-radius: var(--pill);
+    border: 1.5px solid var(--border-med); font-size: 13px; font-weight: 500;
+    cursor: pointer; background: var(--surface2); color: var(--text2);
+    font-family: inherit; transition: all 0.12s;
+  }
+  .theme-btn.active {
+    background: var(--text); color: var(--bg);
+    border-color: var(--text);
+  }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #141210;
-      --surface: #1e1c19;
-      --surface2: #272420;
-      --border: rgba(255,255,255,0.08);
-      --border-med: rgba(255,255,255,0.14);
-      --text: #f0ede8;
-      --text2: #8a8680;
-      --text3: #5a5650;
-      --meal-bg:#2a2040; --meal-fg:#a78bfa;
-      --water-bg:#162030; --water-fg:#60a5fa;
-      --crash-bg:#2a1810; --crash-fg:#fb8c6a;
-      --act-bg:#102818; --act-fg:#4ade80;
-      --supp-bg:#281e08; --supp-fg:#fbbf24;
-      --mood-bg:#1e1030; --mood-fg:#c084fc;
+      --bg:       #0f0e0d;
+      --surface:  #1a1917;
+      --surface2: #232220;
+      --border:     rgba(255,255,255,0.07);
+      --border-med: rgba(255,255,255,0.13);
+      --text:  #f2ede8;
+      --text2: #9e9990;
+      --text3: #5e5a55;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.2);
+      --shadow-lg: 0 12px 32px rgba(0,0,0,0.5), 0 4px 8px rgba(0,0,0,0.3);
+      --meal-bg: #1e1830;  --meal-fg: #b39dfa;
+      --water-bg: #0e1e30; --water-fg: #5aaff5;
+      --crash-bg: #261508; --crash-fg: #f5874a;
+      --act-bg: #0c1f14;   --act-fg: #4ec98a;
+      --supp-bg: #1e1608;  --supp-fg: #f0b840;
+      --mood-bg: #18102a;  --mood-fg: #c084fc;
     }
   }
 
@@ -156,7 +170,7 @@
 
   /* CRASH ACTIVE CARD */
   .crash-live {
-    background: linear-gradient(135deg, var(--crash-bg), #fff8f5);
+    background: var(--crash-bg);
     border: 1.5px solid var(--crash-fg); border-radius: var(--r);
     padding: 16px; margin-bottom: 14px;
   }
@@ -341,13 +355,55 @@
   #toast { position: fixed; bottom: max(env(safe-area-inset-bottom),20px); left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 20px; border-radius: var(--pill); font-size: 13px; font-weight: 600; z-index: 999; opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; }
 
   /* MOOD CARD */
-  .mood-card { background: linear-gradient(135deg, var(--mood-bg), var(--surface)); border: 1px solid var(--border); border-radius: var(--r); padding: 14px; margin-bottom: 10px; }
+  .mood-card { background: var(--mood-bg); border: 1px solid var(--border); border-radius: var(--r); padding: 14px; margin-bottom: 10px; }
 
   /* DIVIDER */
   .divider { height: 1px; background: var(--border); margin: 12px 0; }
 
   /* SCROLLBAR */
   ::-webkit-scrollbar { width: 0; }
+
+  /* Forced light theme */
+  html[data-theme="light"] {
+    --bg:       #faf9f7;
+    --surface:  #ffffff;
+    --surface2: #f2f0ec;
+    --border:     rgba(0,0,0,0.08);
+    --border-med: rgba(0,0,0,0.14);
+    --text:  #1a1814;
+    --text2: #6b6760;
+    --text3: #a09d98;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.06);
+    --meal-bg: #f0eeff;    --meal-fg: #5b3fd4;
+    --water-bg: #e8f4fd;   --water-fg: #1a6baa;
+    --crash-bg: #fff0eb;   --crash-fg: #c94420;
+    --act-bg: #e8f7f0;     --act-fg: #1a6b4a;
+    --supp-bg: #fff8e8;    --supp-fg: #9a6200;
+    --mood-bg: #f5eeff;    --mood-fg: #7c3aed;
+  }
+
+  /* Forced dark theme */
+  html[data-theme="dark"] {
+    --bg:       #0f0e0d;
+    --surface:  #1a1917;
+    --surface2: #232220;
+    --border:     rgba(255,255,255,0.07);
+    --border-med: rgba(255,255,255,0.13);
+    --text:  #f2ede8;
+    --text2: #9e9990;
+    --text3: #5e5a55;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.2);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.5), 0 4px 8px rgba(0,0,0,0.3);
+    --meal-bg: #1e1830;  --meal-fg: #b39dfa;
+    --water-bg: #0e1e30; --water-fg: #5aaff5;
+    --crash-bg: #261508; --crash-fg: #f5874a;
+    --act-bg: #0c1f14;   --act-fg: #4ec98a;
+    --supp-bg: #1e1608;  --supp-fg: #f0b840;
+    --mood-bg: #18102a;  --mood-fg: #c084fc;
+  }
 </style>
 </head>
 <body>
@@ -554,6 +610,14 @@
         <div style="font-size:14px;font-weight:500;">Mood reminders</div>
         <div style="font-size:13px;color:var(--text3);">9am · 4pm</div>
       </div>
+      <div class="settings-row">
+        <div style="font-size:14px;font-weight:500;">Appearance</div>
+        <div style="display:flex;gap:6px;">
+          <button id="theme-light" class="theme-btn" onclick="setTheme('light')">Light</button>
+          <button id="theme-dark"  class="theme-btn" onclick="setTheme('dark')">Dark</button>
+          <button id="theme-auto"  class="theme-btn" onclick="setTheme('auto')">Auto</button>
+        </div>
+      </div>
     </div>
 
     <div class="section-title">Export</div>
@@ -671,6 +735,7 @@ function render() {
   document.getElementById('bottle-size-display').textContent = S.settings.bottleML;
   document.getElementById('settings-bottle').value       = S.settings.bottleML;
   document.getElementById('settings-water-target').value = S.settings.waterTarget;
+  applyTheme(S.settings.theme || 'auto');
   document.getElementById('salt-total').textContent = todayItems(S.salt).reduce((a,i)=>a+(i.mg||0),0);
 
   renderCrashZone();
@@ -783,15 +848,154 @@ function renderMoodScreen() {
 // ─── RECENT LOG ──────────────────────────────────────────────────────
 function renderRecentLog() {
   const all = [
-    ...todayItems(S.food).map(i=>({ts:i.ts, label:i.name+(i.amount?' — '+i.amount:''), type:'meal'})),
-    ...todayItems(S.water).map(i=>({ts:i.ts, label:S.settings.bottleML+'ml water', type:'water'})),
-    ...todayItems(S.crashes).map(i=>({ts:i.startTs, label:(i.types||['Crash']).join(', ')+' · sev '+i.severity+(i.endTs?' · '+fmtDur(i.endTs-i.startTs):''), type:'crash'})),
-    ...todayItems(S.activities).map(i=>({ts:i.ts, label:i.actType+(i.duration?' · '+i.duration+'m':''), type:'activity'})),
-  ].sort((a,b)=>b.ts-a.ts).slice(0,12);
+    ...todayItems(S.food).map(i=>({ts:i.ts, id:i.id, label:i.name+(i.amount?' — '+i.amount:''), type:'meal'})),
+    ...todayItems(S.water).map(i=>({ts:i.ts, id:i.id, label:S.settings.bottleML+'ml water', type:'water'})),
+    ...todayItems(S.crashes).map(i=>({ts:i.startTs, id:i.id, label:(i.types||['Crash']).join(', ')+' · sev '+i.severity+(i.endTs?' · '+fmtDur(i.endTs-i.startTs):''), type:'crash'})),
+    ...todayItems(S.activities).map(i=>({ts:i.ts, id:i.id, label:i.actType+(i.duration?' · '+i.duration+'m':''), type:'activity'})),
+  ].sort((a,b)=>b.ts-a.ts).slice(0,20);
 
   const el = document.getElementById('recent-log');
   if (!all.length) { el.innerHTML = '<div style="padding:14px 0;font-size:13px;color:var(--text3);">Nothing logged yet today</div>'; return; }
-  el.innerHTML = all.map(i=>`<div class="log-item">${logIcon(i.type)}<div style="flex:1;min-width:0;"><div class="log-time">${fmt(i.ts)}</div><div class="log-main">${i.label}</div></div></div>`).join('');
+  el.innerHTML = all.map(i=>`<div class="log-item" style="align-items:center;cursor:pointer;" onclick="openItemDetail('${i.type}','${i.id}')">
+    ${logIcon(i.type)}
+    <div style="flex:1;min-width:0;">
+      <div class="log-time">${fmt(i.ts)}</div>
+      <div class="log-main">${i.label}</div>
+    </div>
+    <svg style="flex-shrink:0;opacity:0.3;margin-left:8px;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </div>`).join('');
+}
+
+function openItemDetail(type, id) {
+  const existing = document.getElementById('detail-modal'); if(existing) existing.remove();
+
+  // Get item label for display
+  let title = '', subtitle = '';
+  if (type === 'meal') {
+    const item = S.food.find(i=>i.id===id);
+    if (!item) return;
+    title = item.name + (item.amount ? ' — ' + item.amount : '');
+    subtitle = [item.histamine ? 'Histamine: ' + item.histamine : '', item.notes].filter(Boolean).join(' · ');
+  } else if (type === 'water') {
+    title = S.settings.bottleML + 'ml water';
+    subtitle = 'Tap remove to delete this entry';
+  } else if (type === 'crash') {
+    const item = S.crashes.find(i=>i.id===id);
+    if (!item) return;
+    title = (item.types||['Crash']).join(', ');
+    subtitle = 'Severity ' + item.severity + '/5' + (item.duration ? ' · ' + fmtDur(item.duration) : '');
+  } else if (type === 'activity') {
+    const item = S.activities.find(i=>i.id===id);
+    if (!item) return;
+    title = item.actType + (item.duration ? ' · ' + item.duration + 'm' : '');
+    subtitle = 'Exertion ' + item.exertion + '/5' + (item.notes ? ' · ' + item.notes : '');
+  }
+
+  const modal = document.createElement('div'); modal.id='detail-modal'; modal.className='modal-bg';
+  modal.onclick = e => { if(e.target===modal) modal.remove(); };
+  const inner = document.createElement('div'); inner.className='modal-sheet';
+  inner.innerHTML = `
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      ${logIcon(type)}
+      <div>
+        <div style="font-size:16px;font-weight:700;">${title}</div>
+        ${subtitle ? `<div style="font-size:13px;color:var(--text2);margin-top:2px;">${subtitle}</div>` : ''}
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${type !== 'water' ? `<button class="btn-primary" style="background:var(--surface2);color:var(--text);" id="detail-edit">Edit</button>` : ''}
+      <button class="btn-primary" style="background:var(--crash-bg);color:var(--crash-fg);" id="detail-delete">Remove</button>
+      <button class="btn-ghost" id="detail-cancel">Cancel</button>
+    </div>`;
+
+  if (type !== 'water') {
+    inner.querySelector('#detail-edit').onclick = () => {
+      modal.remove();
+      if (type === 'meal')     editMeal(id);
+      if (type === 'crash')    showCrashModal(id);
+      if (type === 'activity') editActivity(id);
+    };
+  }
+
+  inner.querySelector('#detail-delete').onclick = () => {
+    modal.remove();
+    deleteItem(type, id);
+  };
+
+  inner.querySelector('#detail-cancel').onclick = () => modal.remove();
+  modal.appendChild(inner); document.body.appendChild(modal);
+}
+
+function deleteItem(type, id) {
+  if (type === 'meal')     { S.food       = S.food.filter(i=>i.id!==id);       sv('bsp_food',S.food); }
+  if (type === 'water')    { S.water      = S.water.filter(i=>i.id!==id);      sv('bsp_water',S.water); }
+  if (type === 'crash')    { S.crashes    = S.crashes.filter(i=>i.id!==id);    sv('bsp_crashes',S.crashes); }
+  if (type === 'activity') { S.activities = S.activities.filter(i=>i.id!==id); sv('bsp_activities',S.activities); }
+  render();
+}
+
+function editActivity(id) {
+  const existing = document.getElementById('edit-modal'); if(existing) existing.remove();
+  const item = S.activities.find(a=>a.id===id); if(!item) return;
+  const modal = document.createElement('div'); modal.id='edit-modal'; modal.className='modal-bg';
+  const inner = document.createElement('div'); inner.className='modal-sheet';
+
+  // Build act type grid html
+  const actGridHtml = ACT_TYPES.map(a=>`<button class="act-btn ${item.actType===a.label?'sel':''}" data-act="${a.label}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${a.icon}</svg>${a.label}</button>`).join('');
+
+  inner.innerHTML = `<div class="modal-handle"></div>
+    <div class="modal-title">Edit activity</div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px;">Activity type</div>
+    <div class="act-grid" id="ea-grid" style="margin-bottom:14px;">${actGridHtml}</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <input type="number" id="ea-duration" value="${item.duration||''}" placeholder="minutes" style="width:100px;">
+      <input type="text" id="ea-notes" value="${item.notes||''}" placeholder="Notes" style="flex:1;">
+    </div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px;">Exertion level</div>
+    <div class="sev-row" id="ea-sev-row" style="margin-bottom:16px;"></div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn-ghost" style="flex:1;" onclick="document.getElementById('edit-modal').remove()">Cancel</button>
+      <button class="btn-primary" style="flex:2;background:var(--act-fg);color:#fff;" id="ea-save">Save</button>
+    </div>`;
+
+  let eaSelType = item.actType;
+  let eaSelSev  = item.exertion || 2;
+
+  function rebuildSev() {
+    const row = inner.querySelector('#ea-sev-row');
+    row.innerHTML = '';
+    [1,2,3,4,5].forEach(n => {
+      const b = document.createElement('button');
+      b.className = 'sev-btn' + (eaSelSev===n?' sel':'');
+      b.textContent = n;
+      b.onclick = () => { eaSelSev=n; rebuildSev(); };
+      row.appendChild(b);
+    });
+  }
+  rebuildSev();
+
+  inner.querySelectorAll('[data-act]').forEach(b => {
+    b.onclick = () => {
+      eaSelType = b.getAttribute('data-act');
+      inner.querySelectorAll('[data-act]').forEach(x=>x.classList.toggle('sel', x===b));
+    };
+  });
+
+  inner.querySelector('#ea-save').onclick = () => {
+    const dur = inner.querySelector('#ea-duration').value;
+    S.activities = S.activities.map(a => a.id===id ? {
+      ...a,
+      actType: eaSelType,
+      duration: dur ? parseInt(dur) : null,
+      exertion: eaSelSev,
+      notes: inner.querySelector('#ea-notes').value.trim(),
+    } : a);
+    sv('bsp_activities', S.activities);
+    modal.remove(); render();
+  };
+
+  modal.appendChild(inner); document.body.appendChild(modal);
 }
 
 // ─── WATER ───────────────────────────────────────────────────────────
@@ -1238,6 +1442,31 @@ function showToast(msg) {
 }
 
 // ─── INIT ────────────────────────────────────────────────────────────
+
+// ─── THEME ───────────────────────────────────────────────────────────
+function applyTheme(theme) {
+  const root = document.getElementById('root');
+  if (theme === 'light') {
+    root.setAttribute('data-theme', 'light');
+  } else if (theme === 'dark') {
+    root.setAttribute('data-theme', 'dark');
+  } else {
+    root.removeAttribute('data-theme'); // let OS decide
+  }
+  // Update button states
+  ['light','dark','auto'].forEach(t => {
+    const btn = document.getElementById('theme-' + t);
+    if (btn) btn.classList.toggle('active', t === theme);
+  });
+}
+
+function setTheme(theme) {
+  S.settings.theme = theme;
+  sv('bsp_settings', S.settings);
+  applyTheme(theme);
+}
+
+applyTheme(S.settings.theme || 'auto');
 render();
 </script>
 </body>
