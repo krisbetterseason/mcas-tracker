@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="MCAS Tracker">
+<meta name="theme-color" content="#faf9f7">
+<title>MCAS Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #faf9f7;
+    --surface: #ffffff;
+    --surface2: #f2f0ec;
+    --border: rgba(0,0,0,0.08);
+    --border-med: rgba(0,0,0,0.14);
+    --text: #1a1814;
+    --text2: #6b6760;
+    --text3: #a09d98;
+    --r: 16px;
+    --rs: 10px;
+    --pill: 999px;
+
+    --meal-bg: #f0eeff;    --meal-fg: #5b3fd4;
+    --water-bg: #e8f4fd;   --water-fg: #1a6baa;
+    --crash-bg: #fff0eb;   --crash-fg: #c94420;
+    --act-bg: #e8f7f0;     --act-fg: #1a6b4a;
+    --supp-bg: #fff8e8;    --supp-fg: #9a6200;
+    --mood-bg: #f5eeff;    --mood-fg: #7c3aed;
+
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141210;
+      --surface: #1e1c19;
+      --surface2: #272420;
+      --border: rgba(255,255,255,0.08);
+      --border-med: rgba(255,255,255,0.14);
+      --text: #f0ede8;
+      --text2: #8a8680;
+      --text3: #5a5650;
+      --meal-bg:#2a2040; --meal-fg:#a78bfa;
+      --water-bg:#162030; --water-fg:#60a5fa;
+      --crash-bg:#2a1810; --crash-fg:#fb8c6a;
+      --act-bg:#102818; --act-fg:#4ade80;
+      --supp-bg:#281e08; --supp-fg:#fbbf24;
+      --mood-bg:#1e1030; --mood-fg:#c084fc;
+    }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .app { max-width: 430px; margin: 0 auto; min-height: 100vh; position: relative; }
+
+  /* TOP BAR */
+  .top-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: env(safe-area-inset-top, 16px) 20px 12px;
+    padding-top: max(env(safe-area-inset-top), 16px);
+    background: var(--bg);
+    position: sticky; top: 0; z-index: 50;
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+  }
+  .top-bar-left { display: flex; align-items: baseline; gap: 8px; }
+  .top-bar-title { font-size: 20px; font-weight: 700; letter-spacing: -0.4px; color: var(--text); }
+  .top-date { font-size: 13px; color: var(--text3); font-weight: 400; }
+  .menu-btn {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--surface); border: 1px solid var(--border-med);
+    cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px;
+    box-shadow: var(--shadow-sm);
+  }
+  .menu-btn span { display: block; width: 15px; height: 1.5px; background: var(--text2); border-radius: 2px; transition: all 0.2s; }
+
+  /* DRAWER */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 98; display: none; backdrop-filter: blur(2px); }
+  .overlay.open { display: block; }
+  .drawer {
+    position: fixed; top: 0; right: 0; bottom: 0; width: 260px;
+    background: var(--surface); z-index: 99;
+    transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.32,0,0,1);
+    padding: max(env(safe-area-inset-top),20px) 0 20px;
+    box-shadow: var(--shadow-lg);
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--text3); padding: 0 20px 10px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 20px; cursor: pointer; font-size: 15px; font-weight: 500;
+    color: var(--text2); border: none; background: none; width: 100%;
+    text-align: left; transition: all 0.12s; border-left: 3px solid transparent;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { color: var(--crash-fg); border-left-color: var(--crash-fg); background: var(--crash-bg); }
+  .nav-icon { width: 20px; height: 20px; flex-shrink: 0; opacity: 0.7; }
+  .nav-item.active .nav-icon { opacity: 1; }
+
+  /* SCREENS */
+  .screen { display: none; padding: 16px 16px 32px; }
+  .screen.active { display: block; }
+
+  /* TYPOGRAPHY */
+  .section-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--text3); margin: 20px 0 8px;
+  }
+  .page-section { margin-bottom: 20px; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 16px; margin-bottom: 10px;
+    box-shadow: var(--shadow-sm);
+  }
+  .card-title {
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.07em; margin-bottom: 12px;
+  }
+
+  /* CRASH BUTTON — prominent */
+  .crash-start-btn {
+    width: 100%; padding: 16px; border-radius: var(--r); border: none;
+    font-size: 16px; font-weight: 700; cursor: pointer; letter-spacing: -0.2px;
+    background: linear-gradient(135deg, #e8521c 0%, #c43010 100%);
+    color: #fff; box-shadow: 0 4px 16px rgba(196,48,16,0.35), 0 2px 4px rgba(196,48,16,0.2);
+    transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .crash-start-btn:active { transform: scale(0.98); box-shadow: 0 2px 8px rgba(196,48,16,0.3); }
+  .crash-stop-btn {
+    width: 100%; padding: 16px; border-radius: var(--r); border: none;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    background: linear-gradient(135deg, #2d7a1e 0%, #1f5812 100%);
+    color: #fff; box-shadow: 0 4px 16px rgba(31,88,18,0.3);
+    transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+
+  /* CRASH ACTIVE CARD */
+  .crash-live {
+    background: linear-gradient(135deg, var(--crash-bg), #fff8f5);
+    border: 1.5px solid var(--crash-fg); border-radius: var(--r);
+    padding: 16px; margin-bottom: 14px;
+  }
+  .crash-live-label {
+    font-size: 10px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--crash-fg); margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .pulse-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--crash-fg); animation: pulse 1.4s ease infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+  .crash-timer { font-size: 32px; font-weight: 800; color: var(--crash-fg); font-variant-numeric: tabular-nums; letter-spacing: -1px; }
+
+  /* STAT GRID */
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .stat {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 14px;
+    box-shadow: var(--shadow-sm);
+  }
+  .stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 6px; }
+  .stat-val { font-size: 26px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+  .stat-unit { font-size: 12px; color: var(--text2); font-weight: 400; }
+
+  /* QUICK CARDS */
+  .quick-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+  .quick-card {
+    border-radius: var(--r); padding: 14px 8px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; transition: all 0.12s;
+    border: 1px solid transparent; box-shadow: var(--shadow-sm);
+  }
+  .quick-card:active { transform: scale(0.95); }
+
+  /* INPUTS */
+  input[type=text], input[type=number], select, textarea {
+    width: 100%; padding: 10px 12px;
+    border: 1.5px solid var(--border-med); border-radius: var(--rs);
+    font-size: 14px; background: var(--bg); color: var(--text);
+    font-family: inherit; transition: border-color 0.15s;
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--meal-fg); }
+
+  /* BUTTONS */
+  .btn-primary {
+    width: 100%; padding: 13px; border-radius: var(--rs);
+    border: none; font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all 0.12s; letter-spacing: -0.1px;
+  }
+  .btn-primary:active { opacity: 0.85; transform: scale(0.99); }
+  .btn-ghost {
+    padding: 8px 14px; border-radius: var(--pill);
+    border: 1.5px solid var(--border-med); font-size: 13px; font-weight: 500;
+    cursor: pointer; background: var(--surface2); color: var(--text2);
+    transition: all 0.12s;
+  }
+  .btn-ghost:hover { border-color: var(--border-med); background: var(--surface); color: var(--text); }
+  .btn-ghost.sel { background: var(--crash-bg); border-color: var(--crash-fg); color: var(--crash-fg); }
+
+  /* SEV / RATING ROWS */
+  .sev-row { display: flex; gap: 8px; }
+  .sev-btn {
+    flex: 1; height: 40px; border-radius: var(--rs);
+    border: 1.5px solid var(--border-med); font-size: 15px; font-weight: 700;
+    cursor: pointer; background: var(--surface2); color: var(--text2);
+    transition: all 0.12s;
+  }
+  .sev-btn.sel { background: var(--crash-fg); border-color: var(--crash-fg); color: #fff; }
+  .mood-btn {
+    flex: 1; height: 44px; border-radius: var(--rs);
+    border: 1.5px solid var(--border-med); font-size: 18px;
+    cursor: pointer; background: var(--surface2);
+    transition: all 0.12s; display: flex; align-items: center; justify-content: center;
+  }
+  .mood-btn.sel { background: var(--mood-bg); border-color: var(--mood-fg); }
+  .mood-btn:active { transform: scale(0.92); }
+
+  /* WATER DROPS */
+  .water-track { display: flex; gap: 6px; flex-wrap: wrap; }
+  .water-drop {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 1.5px solid var(--border-med);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 11px; font-weight: 600; color: var(--text3);
+    transition: all 0.15s;
+  }
+  .water-drop.filled { background: var(--water-fg); border-color: var(--water-fg); color: #fff; }
+  .water-drop.filled:hover { background: #c0392b; border-color: #c0392b; }
+
+  /* LOG ITEMS */
+  .log-item {
+    padding: 11px 0; border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .log-item:last-child { border-bottom: none; }
+  .log-icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .log-time { font-size: 11px; color: var(--text3); margin-bottom: 2px; font-weight: 500; }
+  .log-main { font-size: 14px; color: var(--text); font-weight: 500; }
+  .log-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .edit-link { font-size: 12px; color: var(--water-fg); cursor: pointer; border: none; background: none; padding: 0; font-family: inherit; font-weight: 500; margin-top: 3px; display: block; }
+
+  /* ACTIVITY GRID */
+  .act-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .act-btn {
+    padding: 12px 6px 10px; border-radius: var(--r);
+    border: 1.5px solid var(--border); background: var(--surface2);
+    font-size: 11px; font-weight: 600; cursor: pointer; color: var(--text2);
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    transition: all 0.12s; line-height: 1.2;
+  }
+  .act-btn.sel { border-color: var(--act-fg); background: var(--act-bg); color: var(--act-fg); }
+  .act-btn:active { transform: scale(0.95); }
+
+  /* CRASH TYPE BUTTONS */
+  .crash-type-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 13px 14px; border-radius: var(--rs);
+    border: 1.5px solid var(--border-med); background: var(--surface2);
+    font-size: 14px; font-weight: 500; cursor: pointer; color: var(--text);
+    width: 100%; transition: all 0.15s; text-align: left;
+  }
+  .crash-type-btn.sel { border-color: var(--crash-fg); background: var(--crash-bg); color: var(--crash-fg); font-weight: 600; }
+  .crash-type-btn .ck { width: 20px; height: 20px; border-radius: 50%; border: 2px solid currentColor; display: flex; align-items: center; justify-content: center; margin-left: auto; flex-shrink: 0; }
+  .crash-type-btn.sel .ck { background: var(--crash-fg); border-color: var(--crash-fg); }
+
+  /* SYMPTOM CHIPS */
+  .chip {
+    padding: 5px 11px; border-radius: var(--pill);
+    border: 1px solid var(--border-med);
+    font-size: 12px; cursor: pointer; font-weight: 500;
+    background: var(--surface2); color: var(--text2);
+    transition: all 0.12s;
+  }
+  .chip.sel { background: var(--crash-bg); border-color: var(--crash-fg); color: var(--crash-fg); }
+
+  /* TAG */
+  .tag { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: var(--pill); font-size: 11px; font-weight: 600; }
+
+  /* MODAL */
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; z-index: 200; backdrop-filter: blur(3px); }
+  .modal-sheet {
+    background: var(--surface); border-radius: 24px 24px 0 0;
+    padding: 16px 20px max(env(safe-area-inset-bottom),20px);
+    width: 100%; max-width: 430px; margin: 0 auto;
+    max-height: 88vh; overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+  }
+  .modal-handle { width: 36px; height: 4px; background: var(--border-med); border-radius: 2px; margin: 0 auto 18px; }
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; letter-spacing: -0.3px; }
+
+  /* SUPPLEMENT */
+  .supp-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid var(--border); }
+  .supp-row:last-child { border-bottom: none; }
+  .check-circle { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border-med); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+  .check-circle.done { background: var(--act-fg); border-color: var(--act-fg); }
+
+  /* STREAK */
+  .streak-grid { display: flex; gap: 6px; }
+  .streak-day { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .streak-label { font-size: 10px; font-weight: 600; color: var(--text3); }
+  .streak-dot { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+  .streak-dot.hit { background: var(--act-fg); border-color: var(--act-fg); color: #fff; }
+  .streak-dot.miss { background: var(--surface2); color: var(--text3); }
+  .streak-dot.today { border-color: var(--water-fg); }
+
+  /* HISTORY */
+  .history-day { margin-bottom: 16px; }
+  .history-day-header { font-size: 13px; font-weight: 700; color: var(--text2); margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+
+  /* SETTINGS ROW */
+  .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .settings-row:last-child { border-bottom: none; }
+  .small-input { width: 80px; padding: 8px 10px; border: 1.5px solid var(--border-med); border-radius: var(--rs); font-size: 14px; background: var(--bg); color: var(--text); text-align: right; }
+
+  /* EXPORT BTN */
+  .export-btn { width: 100%; padding: 12px; border-radius: var(--rs); border: 1.5px solid var(--border-med); background: var(--surface2); font-size: 14px; cursor: pointer; color: var(--text); margin-top: 8px; font-family: inherit; font-weight: 500; }
+
+  /* TOAST */
+  #toast { position: fixed; bottom: max(env(safe-area-inset-bottom),20px); left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 20px; border-radius: var(--pill); font-size: 13px; font-weight: 600; z-index: 999; opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; }
+
+  /* MOOD CARD */
+  .mood-card { background: linear-gradient(135deg, var(--mood-bg), var(--surface)); border: 1px solid var(--border); border-radius: var(--r); padding: 14px; margin-bottom: 10px; }
+
+  /* DIVIDER */
+  .divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 0; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <div class="top-bar-title" id="screen-title">Today</div>
+      <div class="top-date" id="top-date"></div>
+    </div>
+    <button class="menu-btn" onclick="openNav()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+
+  <div class="overlay" id="overlay" onclick="closeNav()"></div>
+  <nav class="drawer" id="drawer">
+    <div class="drawer-label">Menu</div>
+    <button class="nav-item active" id="nav-home" onclick="goTab('home')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Home
+    </button>
+    <button class="nav-item" id="nav-mood" onclick="goTab('mood')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+      Mood & Energy
+    </button>
+    <button class="nav-item" id="nav-food" onclick="goTab('food')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+      Food & Water
+    </button>
+    <button class="nav-item" id="nav-activity" onclick="goTab('activity')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Activity
+    </button>
+    <button class="nav-item" id="nav-crash" onclick="goTab('crash')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      Crashes
+    </button>
+    <button class="nav-item" id="nav-supps" onclick="goTab('supps')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 20H4a2 2 0 01-2-2V6c0-1.1.9-2 2-2h3.93a2 2 0 011.66.9l.82 1.2a2 2 0 001.66.9H20a2 2 0 012 2v2"/><circle cx="17" cy="17" r="5"/><line x1="17" y1="15" x2="17" y2="19"/><line x1="15" y1="17" x2="19" y2="17"/></svg>
+      Supplements
+    </button>
+    <button class="nav-item" id="nav-history" onclick="goTab('history')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      History
+    </button>
+    <button class="nav-item" id="nav-export" onclick="goTab('export')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+      Settings & Data
+    </button>
+  </nav>
+
+  <!-- HOME -->
+  <div id="screen-home" class="screen active">
+    <div id="crash-active-zone"></div>
+
+    <div class="stat-grid">
+      <div class="stat"><div class="stat-label">Water</div><div><span class="stat-val" id="stat-water">0</span> <span class="stat-unit">bottles</span></div></div>
+      <div class="stat"><div class="stat-label">Crashes</div><div><span class="stat-val" id="stat-crashes">0</span> <span class="stat-unit">today</span></div></div>
+      <div class="stat"><div class="stat-label">Meals</div><div><span class="stat-val" id="stat-meals">0</span> <span class="stat-unit">logged</span></div></div>
+      <div class="stat"><div class="stat-label">Supplements</div><div><span class="stat-val" id="stat-supps">0</span> <span class="stat-unit">taken</span></div></div>
+    </div>
+
+    <div id="mood-home-card"></div>
+
+    <div class="quick-grid">
+      <div class="quick-card" style="background:var(--meal-bg);color:var(--meal-fg);" onclick="goTab('food')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+        Log Meal
+      </div>
+      <div class="quick-card" style="background:var(--water-bg);color:var(--water-fg);" onclick="logWater()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>
+        Water
+      </div>
+      <div class="quick-card" style="background:var(--act-bg);color:var(--act-fg);" onclick="goTab('activity')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Activity
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:20px;">Crash Log</div>
+    <button id="crash-btn" class="crash-start-btn" onclick="toggleCrash()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      Start Crash
+    </button>
+
+    <div class="section-title" style="margin-top:20px;">Recent Activity</div>
+    <div class="card" style="padding:0 16px;"><div id="recent-log"></div></div>
+  </div>
+
+  <!-- MOOD -->
+  <div id="screen-mood" class="screen">
+    <div id="mood-check-morning"></div>
+    <div id="mood-check-afternoon"></div>
+    <div class="section-title">7-Day Mood & Energy</div>
+    <div class="card"><div id="mood-history-chart"></div></div>
+  </div>
+
+  <!-- FOOD -->
+  <div id="screen-food" class="screen">
+    <div class="card" style="background:var(--meal-bg);border-color:transparent;">
+      <div class="card-title" style="color:var(--meal-fg);display:flex;align-items:center;gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/></svg>
+        Log Meal
+      </div>
+      <input type="text" id="food-name" placeholder="What did you eat?" style="margin-bottom:8px;background:var(--surface);">
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input type="text" id="food-amount" placeholder="Amount" style="flex:1;background:var(--surface);">
+        <select id="food-histamine" style="width:130px;background:var(--surface);">
+          <option value="">Histamine?</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <input type="text" id="food-notes" placeholder="Notes (optional)" style="flex:1;background:var(--surface);">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--crash-fg);cursor:pointer;white-space:nowrap;">
+          <input type="checkbox" id="food-trigger" style="width:auto;"> Trigger?
+        </label>
+      </div>
+      <button class="btn-primary" style="background:var(--meal-fg);color:#fff;" onclick="logMeal()">Log Meal</button>
+    </div>
+
+    <div class="section-title">Water</div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-size:13px;color:var(--text2);">Bottle: <strong id="bottle-size-display">750</strong>ml</div>
+        <button class="btn-ghost" onclick="goTab('export')">Settings</button>
+      </div>
+      <div id="water-bubbles" class="water-track" style="margin-bottom:10px;"></div>
+      <p style="font-size:11px;color:var(--text3);margin-bottom:10px;">Tap filled drop to remove</p>
+      <button class="btn-primary" style="background:var(--water-fg);color:#fff;" onclick="logWater()">+ Finish a bottle</button>
+    </div>
+
+    <div class="section-title">Salt Intake</div>
+    <div class="card">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="number" id="salt-input" placeholder="mg" style="flex:1;">
+        <button class="btn-ghost" onclick="logSalt()">Add</button>
+      </div>
+      <div style="margin-top:8px;font-size:13px;color:var(--text2);">Today: <strong id="salt-total">0</strong>mg</div>
+    </div>
+
+    <div class="section-title">Today's Food Log</div>
+    <div class="card" style="padding:0 16px;"><div id="food-log-list"></div></div>
+  </div>
+
+  <!-- ACTIVITY -->
+  <div id="screen-activity" class="screen">
+    <div class="card">
+      <div class="card-title" style="color:var(--act-fg);">What did you do?</div>
+      <div class="act-grid" id="act-grid"></div>
+      <div id="act-other-field" style="display:none;margin-top:10px;">
+        <input type="text" id="act-other-text" placeholder="Describe activity">
+      </div>
+      <div style="margin-top:14px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px;">Duration & Notes</div>
+        <div style="display:flex;gap:8px;">
+          <input type="number" id="act-duration" placeholder="minutes" style="width:100px;">
+          <input type="text" id="act-notes" placeholder="Notes (optional)" style="flex:1;">
+        </div>
+      </div>
+      <div style="margin-top:14px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px;">Exertion level</div>
+        <div class="sev-row" id="act-exertion-row"></div>
+      </div>
+      <button class="btn-primary" style="background:var(--act-fg);color:#fff;margin-top:14px;" onclick="logActivity()">Log Activity</button>
+    </div>
+    <div class="section-title">Today's Activity</div>
+    <div class="card" style="padding:0 16px;"><div id="activity-log-list"></div></div>
+  </div>
+
+  <!-- CRASHES -->
+  <div id="screen-crash" class="screen">
+    <div id="crash-log-list"></div>
+  </div>
+
+  <!-- SUPPLEMENTS -->
+  <div id="screen-supps" class="screen">
+    <div class="section-title" style="margin-top:4px;">7-Day Adherence</div>
+    <div class="card"><div id="supp-streak"></div></div>
+    <div class="section-title">Today's Supplements</div>
+    <div class="card" style="padding:0 16px;"><div id="supp-checklist"></div></div>
+    <div class="section-title">Manage</div>
+    <div class="card">
+      <input type="text" id="supp-name" placeholder="Supplement name" style="margin-bottom:8px;">
+      <input type="text" id="supp-dose" placeholder="Dose (e.g. 500mg)" style="margin-bottom:10px;">
+      <button class="btn-primary" style="background:var(--supp-fg);color:#fff;" onclick="addSupplement()">Add Supplement</button>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="screen-history" class="screen">
+    <div id="history-content"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="screen-export" class="screen">
+    <div class="section-title" style="margin-top:4px;">Settings</div>
+    <div class="card" style="padding:0 16px;">
+      <div class="settings-row"><div style="font-size:14px;font-weight:500;">Bottle size (ml)</div><input type="number" class="small-input" id="settings-bottle" value="750" onchange="saveBottleSize()"></div>
+      <div class="settings-row"><div style="font-size:14px;font-weight:500;">Daily water target (bottles)</div><input type="number" class="small-input" id="settings-water-target" value="8" onchange="saveWaterTarget()"></div>
+      <div class="settings-row">
+        <div style="font-size:14px;font-weight:500;">Mood reminders</div>
+        <div style="font-size:13px;color:var(--text3);">9am · 4pm</div>
+      </div>
+    </div>
+
+    <div class="section-title">Export</div>
+    <div class="card">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px;">Export as JSON to combine with sleep, HR, glucose, and cycle data.</p>
+      <button class="export-btn" onclick="exportData()">Export today (JSON)</button>
+      <button class="export-btn" onclick="exportAllData()">Export all history (JSON)</button>
+    </div>
+
+    <div class="section-title">Danger Zone</div>
+    <div class="card">
+      <button class="export-btn" style="color:var(--crash-fg);" onclick="clearToday()">Clear today's logs</button>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+</div>
+
+<script>
+// ─── CONSTANTS ───────────────────────────────────────────────────────
+const ACT_TYPES = [
+  {label:'Small walk', icon:'<path d="M9 19l1-5-2-3 3-4 2 3h3"/><circle cx="12" cy="5" r="2"/><path d="M6 11l2-1"/><path d="M15 19l-1-4"/>'},
+  {label:'Swim',       icon:'<path d="M2 12c1.5-2 3-2 4.5 0s3 2 4.5 0 3-2 4.5 0 3 2 4.5 0"/><circle cx="17" cy="4" r="2"/><path d="M15 6l-2 4 4 1"/>'},
+  {label:'Shower',     icon:'<path d="M4 4h.01M8 4h.01M12 4h.01"/><path d="M5 8c0-2.2 1.8-4 4-4s4 1.8 4 4v10H5V8z"/><path d="M5 12h8"/>'},
+  {label:'Socialise',  icon:'<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>'},
+  {label:'Errands',    icon:'<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/>'},
+  {label:'Work',       icon:'<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>'},
+  {label:'Rest',       icon:'<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/>'},
+  {label:'Travel',     icon:'<path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="20" r="1"/><circle cx="20" cy="20" r="1"/>'},
+  {label:'Exercise',   icon:'<path d="M6.5 6.5l11 11"/><path d="M21 3L9 15"/><path d="M3 21l12-12"/>'},
+  {label:'Other',      icon:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'},
+];
+const CRASH_TYPES = ['Throat numbness', 'Brain fog', 'Heavy / Sleep'];
+const CRASH_SYMPTOMS = ['Nausea','Heart racing','Shaking','Sweating','Flushing','Headache','Chest tightness','Blurry vision','Tingling','Anxiety','GI distress','Light sensitivity','Sound sensitivity','Weakness'];
+const MOOD_EMOJIS = ['😞','😕','😐','🙂','😊'];
+const SCREEN_TITLES = {home:'Today',mood:'Mood & Energy',food:'Food & Water',activity:'Activity',crash:'Crashes',supps:'Supplements',history:'History',export:'Settings & Data'};
+
+// ─── STATE ───────────────────────────────────────────────────────────
+const ld = (k,d) => { try { const v=localStorage.getItem(k); return v?JSON.parse(v):d; } catch { return d; } };
+const sv = (k,v) => { try { localStorage.setItem(k,JSON.stringify(v)); } catch {} };
+
+let S = {
+  settings:    ld('bsp_settings',    {bottleML:750, waterTarget:8}),
+  crashes:     ld('bsp_crashes',     []),
+  food:        ld('bsp_food',        []),
+  water:       ld('bsp_water',       []),
+  salt:        ld('bsp_salt',        []),
+  activities:  ld('bsp_activities',  []),
+  supplements: ld('bsp_supplements', [
+    {id:'s1',name:'Vitamin C',dose:'1000mg'},
+    {id:'s2',name:'Quercetin',dose:'500mg'},
+    {id:'s3',name:'DAO enzyme',dose:'1 cap'},
+    {id:'s4',name:'Sodium (electrolytes)',dose:'1 sachet'},
+    {id:'s5',name:'Magnesium',dose:'400mg'},
+  ]),
+  suppTaken:   ld('bsp_supp_taken',  {}), // {suppId: [date, date, ...]} — array of all dates taken
+  activeCrash: ld('bsp_active_crash',null),
+  mood:        ld('bsp_mood',        {}), // {date: {morning:1-5, afternoon:1-5}}
+};
+
+let timerInterval = null;
+let selActType = null;
+let selExertion = 2;
+
+// ─── UTILS ───────────────────────────────────────────────────────────
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+const today = () => new Date().toISOString().slice(0,10);
+const fmt = ts => new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+const fmtDate = d => new Date(d+'T12:00:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
+const fmtDur = ms => { const s=Math.floor(ms/1000),m=Math.floor(s/60),h=Math.floor(m/60); return h>0?h+'h '+(m%60)+'m':m+'m '+(s%60)+'s'; };
+const todayItems = arr => arr.filter(i=>i.date===today());
+
+function last7Days() {
+  const days = [];
+  for (let i=6; i>=0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    days.push(d.toISOString().slice(0,10));
+  }
+  return days;
+}
+
+// ─── NAV ─────────────────────────────────────────────────────────────
+function openNav()  { document.getElementById('drawer').classList.add('open');  document.getElementById('overlay').classList.add('open');  }
+function closeNav() { document.getElementById('drawer').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
+
+function goTab(name) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  const ni = document.getElementById('nav-'+name); if(ni) ni.classList.add('active');
+  document.getElementById('screen-title').textContent = SCREEN_TITLES[name]||'';
+  closeNav(); render();
+}
+
+// ─── ICON HELPERS ────────────────────────────────────────────────────
+const ICON_CFG = {
+  meal:       {bg:'var(--meal-bg)',  fg:'var(--meal-fg)',  p:'<path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/>'},
+  water:      {bg:'var(--water-bg)', fg:'var(--water-fg)', p:'<path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/>'},
+  crash:      {bg:'var(--crash-bg)', fg:'var(--crash-fg)', p:'<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>'},
+  activity:   {bg:'var(--act-bg)',   fg:'var(--act-fg)',   p:'<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>'},
+  supplement: {bg:'var(--supp-bg)',  fg:'var(--supp-fg)',  p:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>'},
+};
+const logIcon = type => {
+  const c = ICON_CFG[type]||ICON_CFG.meal;
+  return `<div class="log-icon" style="background:${c.bg};color:${c.fg};"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${c.p}</svg></div>`;
+};
+
+// ─── RENDER ──────────────────────────────────────────────────────────
+function render() {
+  document.getElementById('top-date').textContent = new Date().toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
+  document.getElementById('stat-water').textContent   = todayItems(S.water).length;
+  document.getElementById('stat-crashes').textContent = todayItems(S.crashes).length;
+  document.getElementById('stat-meals').textContent   = todayItems(S.food).length;
+  document.getElementById('stat-supps').textContent   = S.supplements.filter(s=>suppTakenOn(s.id,today())).length;
+  document.getElementById('bottle-size-display').textContent = S.settings.bottleML;
+  document.getElementById('settings-bottle').value       = S.settings.bottleML;
+  document.getElementById('settings-water-target').value = S.settings.waterTarget;
+  document.getElementById('salt-total').textContent = todayItems(S.salt).reduce((a,i)=>a+(i.mg||0),0);
+
+  renderCrashZone();
+  renderMoodHomeCard();
+  renderRecentLog();
+  renderWaterBubbles();
+  renderFoodLog();
+  renderCrashLog();
+  renderActivityLog();
+  renderSuppChecklist();
+  renderSuppStreak();
+  renderMoodScreen();
+  renderHistory();
+  buildActGrid();
+  buildExertionRow();
+}
+
+// ─── CRASH ZONE ──────────────────────────────────────────────────────
+function renderCrashZone() {
+  const zone = document.getElementById('crash-active-zone');
+  const btn  = document.getElementById('crash-btn');
+  if (S.activeCrash) {
+    const el = Date.now() - S.activeCrash.startTs;
+    zone.innerHTML = `<div class="crash-live">
+      <div class="crash-live-label"><div class="pulse-dot"></div>Crash in progress</div>
+      <div style="font-size:14px;font-weight:600;color:var(--crash-fg);margin:4px 0;">${(S.activeCrash.types||[]).join(' · ')}</div>
+      <div class="crash-timer" id="live-timer">${fmtDur(el)}</div>
+      <div style="font-size:12px;color:var(--crash-fg);margin-top:4px;opacity:0.75;">Started ${fmt(S.activeCrash.startTs)} · Severity ${S.activeCrash.severity}/5</div>
+    </div>`;
+    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg> Stop Crash';
+    btn.className = 'crash-stop-btn';
+    if (!timerInterval) timerInterval = setInterval(()=>{
+      const e=document.getElementById('live-timer');
+      if(e&&S.activeCrash) e.textContent=fmtDur(Date.now()-S.activeCrash.startTs);
+    },1000);
+  } else {
+    zone.innerHTML = '';
+    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Start Crash';
+    btn.className = 'crash-start-btn';
+    if (timerInterval) { clearInterval(timerInterval); timerInterval=null; }
+  }
+}
+
+// ─── MOOD HOME CARD ──────────────────────────────────────────────────
+function renderMoodHomeCard() {
+  const el = document.getElementById('mood-home-card');
+  const tod = S.mood[today()] || {};
+  const hour = new Date().getHours();
+  const needMorning   = !tod.morning   && hour >= 6;
+  const needAfternoon = !tod.afternoon && hour >= 14;
+
+  if (!needMorning && !needAfternoon && (tod.morning || tod.afternoon)) {
+    const m = tod.morning   ? MOOD_EMOJIS[tod.morning-1]   : '—';
+    const a = tod.afternoon ? MOOD_EMOJIS[tod.afternoon-1] : '—';
+    el.innerHTML = `<div class="mood-card" style="display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:12px;font-weight:600;color:var(--mood-fg);">Mood & Energy</div>
+      <div style="display:flex;gap:16px;align-items:center;">
+        <div style="text-align:center;"><div style="font-size:20px;">${m}</div><div style="font-size:10px;color:var(--text3);font-weight:600;">MORNING</div></div>
+        <div style="text-align:center;"><div style="font-size:20px;">${a}</div><div style="font-size:10px;color:var(--text3);font-weight:600;">AFTERNOON</div></div>
+      </div>
+      <button class="btn-ghost" style="font-size:12px;" onclick="goTab('mood')">Edit</button>
+    </div>`;
+    return;
+  }
+  if (needMorning || needAfternoon) {
+    const label = needMorning && !tod.morning ? 'morning' : 'afternoon';
+    el.innerHTML = `<div class="mood-card">
+      <div style="font-size:12px;font-weight:700;color:var(--mood-fg);margin-bottom:10px;">How are you feeling this ${label}?</div>
+      <div style="display:flex;gap:6px;">${MOOD_EMOJIS.map((e,i)=>`<button class="mood-btn" onclick="logMoodQuick('${label}',${i+1})">${e}</button>`).join('')}</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = '';
+}
+
+// ─── MOOD SCREEN ─────────────────────────────────────────────────────
+function renderMoodScreen() {
+  const tod = S.mood[today()] || {};
+  const mEl = document.getElementById('mood-check-morning');
+  const aEl = document.getElementById('mood-check-afternoon');
+
+  mEl.innerHTML = `<div class="card"><div class="card-title" style="color:var(--mood-fg);">Morning check-in</div>
+    <div style="display:flex;gap:6px;">${MOOD_EMOJIS.map((e,i)=>`<button class="mood-btn ${tod.morning===i+1?'sel':''}" onclick="logMood('morning',${i+1})">${e}</button>`).join('')}</div>
+    ${tod.morning?`<div style="font-size:13px;color:var(--text2);margin-top:8px;">Logged: ${MOOD_EMOJIS[tod.morning-1]} ${tod.morning}/5</div>`:''}
+  </div>`;
+
+  aEl.innerHTML = `<div class="card"><div class="card-title" style="color:var(--mood-fg);">Afternoon check-in (4pm)</div>
+    <div style="display:flex;gap:6px;">${MOOD_EMOJIS.map((e,i)=>`<button class="mood-btn ${tod.afternoon===i+1?'sel':''}" onclick="logMood('afternoon',${i+1})">${e}</button>`).join('')}</div>
+    ${tod.afternoon?`<div style="font-size:13px;color:var(--text2);margin-top:8px;">Logged: ${MOOD_EMOJIS[tod.afternoon-1]} ${tod.afternoon}/5</div>`:''}
+  </div>`;
+
+  const days = last7Days();
+  const chartEl = document.getElementById('mood-history-chart');
+  chartEl.innerHTML = `<div style="display:flex;gap:4px;align-items:flex-end;height:80px;margin-bottom:8px;">
+    ${days.map(d=>{
+      const m = S.mood[d];
+      const morning   = m?.morning   || 0;
+      const afternoon = m?.afternoon || 0;
+      const avg = morning&&afternoon?(morning+afternoon)/2:morning||afternoon||0;
+      const h = avg?(avg/5*64+8):4;
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">
+        <div style="background:var(--mood-fg);opacity:${avg?0.3+avg*0.14:0.1};border-radius:4px 4px 0 0;width:100%;height:${h}px;"></div>
+        <div style="font-size:9px;font-weight:600;color:var(--text3);">${new Date(d+'T12:00:00').toLocaleDateString([],{weekday:'narrow'})}</div>
+      </div>`;
+    }).join('')}
+  </div>
+  <div style="font-size:11px;color:var(--text3);">Average energy/mood score over 7 days</div>`;
+}
+
+// ─── RECENT LOG ──────────────────────────────────────────────────────
+function renderRecentLog() {
+  const all = [
+    ...todayItems(S.food).map(i=>({ts:i.ts, label:i.name+(i.amount?' — '+i.amount:''), type:'meal'})),
+    ...todayItems(S.water).map(i=>({ts:i.ts, label:S.settings.bottleML+'ml water', type:'water'})),
+    ...todayItems(S.crashes).map(i=>({ts:i.startTs, label:(i.types||['Crash']).join(', ')+' · sev '+i.severity+(i.endTs?' · '+fmtDur(i.endTs-i.startTs):''), type:'crash'})),
+    ...todayItems(S.activities).map(i=>({ts:i.ts, label:i.actType+(i.duration?' · '+i.duration+'m':''), type:'activity'})),
+  ].sort((a,b)=>b.ts-a.ts).slice(0,12);
+
+  const el = document.getElementById('recent-log');
+  if (!all.length) { el.innerHTML = '<div style="padding:14px 0;font-size:13px;color:var(--text3);">Nothing logged yet today</div>'; return; }
+  el.innerHTML = all.map(i=>`<div class="log-item">${logIcon(i.type)}<div style="flex:1;min-width:0;"><div class="log-time">${fmt(i.ts)}</div><div class="log-main">${i.label}</div></div></div>`).join('');
+}
+
+// ─── WATER ───────────────────────────────────────────────────────────
+function renderWaterBubbles() {
+  const items  = todayItems(S.water);
+  const target = Math.max(items.length, S.settings.waterTarget||8);
+  let html = '';
+  for (let i=0; i<target; i++) {
+    const f = i < items.length;
+    const wid = f ? items[i].id : '';
+    html += `<div class="water-drop ${f?'filled':''}" ${f?`onclick="removeWater('${wid}')" title="Remove"`:''}><span>${i+1}</span></div>`;
+  }
+  document.getElementById('water-bubbles').innerHTML = html;
+}
+function removeWater(id) { S.water=S.water.filter(w=>w.id!==id); sv('bsp_water',S.water); render(); }
+
+// ─── FOOD LOG ────────────────────────────────────────────────────────
+function renderFoodLog() {
+  const items = todayItems(S.food).slice().reverse();
+  const el = document.getElementById('food-log-list');
+  if (!items.length) { el.innerHTML='<div style="padding:14px 0;font-size:13px;color:var(--text3);">Nothing logged yet</div>'; return; }
+  el.innerHTML = items.map(i=>`<div class="log-item">${logIcon('meal')}<div style="flex:1;"><div class="log-time">${fmt(i.ts)}</div><div class="log-main">${i.name}${i.amount?' — '+i.amount:''}</div>${i.histamine?`<div class="log-sub">Histamine: ${i.histamine}</div>`:''}${i.suspectedTrigger?'<span class="tag" style="background:var(--crash-bg);color:var(--crash-fg);margin-top:4px;display:inline-flex;">⚠ Trigger</span>':''}${i.notes?`<div class="log-sub">${i.notes}</div>`:''}<button class="edit-link" onclick="editMeal('${i.id}')">Edit</button></div></div>`).join('');
+}
+
+// ─── CRASH LOG ───────────────────────────────────────────────────────
+function renderCrashLog() {
+  const items = S.crashes.slice().reverse().slice(0,50);
+  const el = document.getElementById('crash-log-list');
+  if (!items.length) { el.innerHTML='<div class="card" style="text-align:center;padding:24px;color:var(--text3);font-size:14px;">No crashes logged yet</div>'; return; }
+  el.innerHTML = items.map(i=>`<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:14px;">${(i.types||['Crash']).join(', ')}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px;">${fmtDate(i.date||today())} · ${fmt(i.startTs)}${i.endTs?' → '+fmt(i.endTs):' (in progress)'}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+        <span class="tag" style="background:var(--crash-bg);color:var(--crash-fg);">Sev ${i.severity}</span>
+        <button class="edit-link" onclick="showCrashModal('${i.id}')">Edit</button>
+      </div>
+    </div>
+    ${i.duration?`<div style="font-size:12px;color:var(--text2);margin-bottom:6px;">Duration: ${fmtDur(i.duration)}</div>`:''}
+    ${i.preActivity?`<div style="font-size:12px;color:var(--text2);margin-bottom:6px;">Before crash: ${i.preActivity}</div>`:''}
+    ${(i.symptoms&&i.symptoms.length)?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">${i.symptoms.map(s=>`<span class="tag" style="background:var(--crash-bg);color:var(--crash-fg);">${s}</span>`).join('')}</div>`:''}
+    ${i.notes?`<div style="font-size:13px;color:var(--text2);">${i.notes}</div>`:''}
+  </div>`).join('');
+}
+
+// ─── ACTIVITY LOG ────────────────────────────────────────────────────
+function renderActivityLog() {
+  const items = todayItems(S.activities).slice().reverse();
+  const el = document.getElementById('activity-log-list');
+  if (!items.length) { el.innerHTML='<div style="padding:14px 0;font-size:13px;color:var(--text3);">Nothing logged yet</div>'; return; }
+  el.innerHTML = items.map(i=>`<div class="log-item">${logIcon('activity')}<div style="flex:1;"><div class="log-time">${fmt(i.ts)}</div><div class="log-main">${i.actType}${i.duration?' · '+i.duration+'m':''}</div><div class="log-sub">Exertion ${i.exertion}/5${i.notes?' · '+i.notes:''}</div></div></div>`).join('');
+}
+
+// ─── SUPPLEMENTS ─────────────────────────────────────────────────────
+function renderSuppChecklist() {
+  const el = document.getElementById('supp-checklist');
+  if (!S.supplements.length) { el.innerHTML='<div style="padding:14px 0;font-size:13px;color:var(--text3);">Add supplements below</div>'; return; }
+  el.innerHTML = S.supplements.map(s=>{
+    const done = suppTakenOn(s.id, today());
+    return `<div class="supp-row">
+      <div><div style="font-size:14px;font-weight:500;">${s.name}</div><div style="font-size:12px;color:var(--text2);">${s.dose}</div></div>
+      <div class="check-circle ${done?'done':''}" onclick="toggleSupp('${s.id}')">
+        ${done?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderSuppStreak() {
+  const days = last7Days();
+  const el = document.getElementById('supp-streak');
+  const target = S.supplements.length;
+  if (!target) { el.innerHTML='<div style="font-size:13px;color:var(--text3);">No supplements added yet</div>'; return; }
+
+  const bars = days.map(d=>{
+    const taken = S.supplements.filter(s=>suppTakenOn(s.id,d)).length;
+    const pct = Math.round(taken/target*100);
+    const hit = pct===100;
+    const isToday = d===today();
+    const label = new Date(d+'T12:00:00').toLocaleDateString([],{weekday:'narrow'});
+    return `<div class="streak-day">
+      <div class="streak-dot ${hit?'hit':'miss'} ${isToday?'today':''}" title="${pct}%">${hit?'✓':pct+'%'}</div>
+      <div class="streak-label">${label}</div>
+    </div>`;
+  });
+
+  const waterDays = days.map(d=>{
+    const count = S.water.filter(w=>w.date===d).length;
+    const hit = count >= (S.settings.waterTarget||8);
+    const isToday = d===today();
+    const label = new Date(d+'T12:00:00').toLocaleDateString([],{weekday:'narrow'});
+    return `<div class="streak-day">
+      <div class="streak-dot ${hit?'hit':'miss'} ${isToday?'today':''}" style="${hit?'':'background:var(--water-bg);color:var(--water-fg);border-color:var(--water-fg)'};" title="${count} bottles">${count}</div>
+      <div class="streak-label">${label}</div>
+    </div>`;
+  });
+
+  el.innerHTML = `
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px;">Supplement adherence</div>
+      <div class="streak-grid">${bars.join('')}</div>
+    </div>
+    <div class="divider"></div>
+    <div style="margin-top:14px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px;">Water target (${S.settings.waterTarget||8} bottles/day)</div>
+      <div class="streak-grid">${waterDays.join('')}</div>
+    </div>`;
+}
+
+// ─── HISTORY SCREEN ──────────────────────────────────────────────────
+function renderHistory() {
+  // Union all days across every data source
+  const daySet = new Set([
+    ...S.food.map(i=>i.date),
+    ...S.water.map(i=>i.date),
+    ...S.crashes.map(i=>i.date),
+    ...S.activities.map(i=>i.date),
+    ...Object.keys(S.mood),
+  ]);
+  const allDates = [...daySet].filter(Boolean).sort().reverse();
+
+  const el = document.getElementById('history-content');
+  if (!allDates.length) { el.innerHTML='<div class="card" style="text-align:center;padding:24px;font-size:14px;color:var(--text3);">No history yet</div>'; return; }
+
+  el.innerHTML = allDates.map(d=>{
+    const dayFood     = S.food.filter(i=>i.date===d);
+    const dayWater    = S.water.filter(i=>i.date===d);
+    const dayCrashes  = S.crashes.filter(i=>i.date===d);
+    const dayAct      = S.activities.filter(i=>i.date===d);
+    const dayMood     = S.mood[d];
+
+    const items = [
+      ...dayFood.map(i=>({ts:i.ts, label:i.name+(i.amount?' — '+i.amount:''), type:'meal'})),
+      ...dayWater.map(i=>({ts:i.ts, label:S.settings.bottleML+'ml water', type:'water'})),
+      ...dayCrashes.map(i=>({ts:i.startTs, label:(i.types||['Crash']).join(', ')+' sev '+i.severity, type:'crash'})),
+      ...dayAct.map(i=>({ts:i.ts, label:i.actType+(i.duration?' · '+i.duration+'m':''), type:'activity'})),
+    ].sort((a,b)=>a.ts-b.ts);
+
+    const suppTaken = S.supplements.filter(s=>suppTakenOn(s.id,d)).length;
+    const suppTotal = S.supplements.length;
+    const moodStr = dayMood?(` · ${dayMood.morning?MOOD_EMOJIS[dayMood.morning-1]:'—'}/${dayMood.afternoon?MOOD_EMOJIS[dayMood.afternoon-1]:'—'}`):'' ;
+    const suppStr = suppTotal ? ` · 💊 ${suppTaken}/${suppTotal}` : '';
+
+    return `<div class="history-day">
+      <div class="history-day-header">${fmtDate(d)}${moodStr} · ${dayWater.length} bottles${suppStr} · ${dayCrashes.length} crash${dayCrashes.length!==1?'es':''}</div>
+      <div class="card" style="padding:0 16px;">
+        ${items.length?items.map(i=>`<div class="log-item">${logIcon(i.type)}<div style="flex:1;min-width:0;"><div class="log-time">${fmt(i.ts)}</div><div class="log-main">${i.label}</div></div></div>`).join(''):'<div style="padding:12px 0;font-size:13px;color:var(--text3);">No entries</div>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── ACTIVITY GRID ───────────────────────────────────────────────────
+function buildActGrid() {
+  const el = document.getElementById('act-grid');
+  el.innerHTML = ACT_TYPES.map(a=>`<button class="act-btn ${selActType===a.label?'sel':''}" onclick="selectAct(this,'${a.label}')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${a.icon}</svg>${a.label}</button>`).join('');
+}
+
+function buildExertionRow() {
+  const el = document.getElementById('act-exertion-row');
+  const btns = [1,2,3,4,5].map(n=>{
+    const b = document.createElement('button');
+    b.className = 'sev-btn' + (selExertion===n?' sel':'');
+    b.textContent = n;
+    b.onclick = () => { selExertion=n; buildExertionRow(); };
+    return b;
+  });
+  el.innerHTML=''; btns.forEach(b=>el.appendChild(b));
+}
+
+function selectAct(btn, label) {
+  selActType = label;
+  buildActGrid();
+  document.getElementById('act-other-field').style.display = label==='Other'?'block':'none';
+}
+
+// ─── CRASH MODAL ─────────────────────────────────────────────────────
+function showCrashModal(editId) {
+  const existing = document.getElementById('crash-modal');
+  if (existing) existing.remove();
+
+  const editing = editId ? S.crashes.find(c=>c.id===editId) : null;
+  let selTypes    = editing ? [...editing.types]              : [];
+  let selSev      = editing ? editing.severity                : 3;
+  let selSymptoms = editing ? [...(editing.symptoms||[])]     : [];
+  let preActivity = editing ? (editing.preActivity||'')       : '';
+  let notes       = editing ? (editing.notes||'')             : '';
+
+  function rebuild() {
+    inner.innerHTML = `
+      <div class="modal-handle"></div>
+      <div class="modal-title">${editId?'Edit crash':'Log crash'}</div>
+
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px;">Type (select all that apply)</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+        ${CRASH_TYPES.map(t=>`<button class="crash-type-btn ${selTypes.includes(t)?'sel':''}" data-ct="${t}">
+          ${t}<span class="ck">${selTypes.includes(t)?'<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}</span>
+        </button>`).join('')}
+      </div>
+
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px;">Severity</div>
+      <div class="sev-row" style="margin-bottom:16px;" id="csev-row"></div>
+
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px;">What were you doing before?</div>
+      <input type="text" id="crash-pre" placeholder="e.g. standing in queue, eating, socialising" value="${preActivity}" style="margin-bottom:16px;">
+
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px;">Additional symptoms</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">
+        ${CRASH_SYMPTOMS.map(s=>`<button class="chip ${selSymptoms.includes(s)?'sel':''}" data-sym="${s}">${s}</button>`).join('')}
+      </div>
+
+      <textarea id="crash-notes-input" placeholder="Notes (optional)" style="width:100%;height:64px;resize:none;margin-bottom:14px;">${notes}</textarea>
+
+      <div style="display:flex;gap:10px;">
+        <button class="btn-ghost" style="flex:1;" id="cm-cancel">Cancel</button>
+        <button class="btn-primary" style="flex:2;background:var(--crash-fg);color:#fff;" id="cm-confirm">${editId?'Save changes':'Start crash'}</button>
+      </div>`;
+
+    // Sev buttons
+    const sevRow = inner.querySelector('#csev-row');
+    [1,2,3,4,5].forEach(n=>{
+      const b=document.createElement('button');
+      b.className='sev-btn'+(selSev===n?' sel':''); b.textContent=n;
+      b.onclick=()=>{selSev=n;rebuild();};
+      sevRow.appendChild(b);
+    });
+
+    // Type buttons
+    inner.querySelectorAll('[data-ct]').forEach(b=>b.onclick=()=>{
+      const t=b.getAttribute('data-ct');
+      if(selTypes.includes(t)) selTypes=selTypes.filter(x=>x!==t); else selTypes.push(t);
+      rebuild();
+    });
+
+    // Symptom chips
+    inner.querySelectorAll('[data-sym]').forEach(b=>b.onclick=()=>{
+      const s=b.getAttribute('data-sym');
+      if(selSymptoms.includes(s)) selSymptoms=selSymptoms.filter(x=>x!==s); else selSymptoms.push(s);
+      rebuild();
+    });
+
+    inner.querySelector('#cm-cancel').onclick = ()=>modal.remove();
+    inner.querySelector('#cm-confirm').onclick = ()=>{
+      if (!selTypes.length) { showToast('Select at least one crash type'); return; }
+      preActivity = inner.querySelector('#crash-pre').value;
+      notes       = inner.querySelector('#crash-notes-input').value;
+      if (editId) {
+        S.crashes = S.crashes.map(c=>c.id===editId?{...c,types:selTypes,severity:selSev,symptoms:selSymptoms,preActivity,notes}:c);
+        sv('bsp_crashes',S.crashes);
+      } else {
+        S.activeCrash = {id:uid(),types:selTypes,severity:selSev,symptoms:selSymptoms,preActivity,notes,startTs:Date.now()};
+        sv('bsp_active_crash',S.activeCrash);
+      }
+      modal.remove(); render();
+    };
+  }
+
+  const modal = document.createElement('div'); modal.id='crash-modal'; modal.className='modal-bg';
+  const inner = document.createElement('div'); inner.className='modal-sheet';
+  modal.appendChild(inner); document.body.appendChild(modal);
+  rebuild();
+}
+
+function editMeal(id) {
+  const existing=document.getElementById('edit-modal'); if(existing)existing.remove();
+  const item = S.food.find(f=>f.id===id); if(!item)return;
+  const modal=document.createElement('div'); modal.id='edit-modal'; modal.className='modal-bg';
+  const inner=document.createElement('div'); inner.className='modal-sheet';
+  inner.innerHTML=`<div class="modal-handle"></div><div class="modal-title">Edit meal</div>
+    <input type="text" id="em-name" value="${item.name}" style="margin-bottom:8px;">
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <input type="text" id="em-amount" value="${item.amount||''}" placeholder="Amount" style="flex:1;">
+      <select id="em-hist" style="width:130px;">
+        <option value="">Histamine?</option>
+        <option value="low" ${item.histamine==='low'?'selected':''}>Low</option>
+        <option value="medium" ${item.histamine==='medium'?'selected':''}>Medium</option>
+        <option value="high" ${item.histamine==='high'?'selected':''}>High</option>
+      </select>
+    </div>
+    <input type="text" id="em-notes" value="${item.notes||''}" placeholder="Notes" style="margin-bottom:14px;">
+    <div style="display:flex;gap:10px;">
+      <button class="btn-ghost" style="flex:1;" onclick="document.getElementById('edit-modal').remove()">Cancel</button>
+      <button class="btn-primary" style="flex:2;background:var(--meal-fg);color:#fff;" id="em-save">Save</button>
+    </div>`;
+  inner.querySelector('#em-save').onclick=()=>{
+    const n=inner.querySelector('#em-name').value.trim(); if(!n)return;
+    S.food=S.food.map(f=>f.id===id?{...f,name:n,amount:inner.querySelector('#em-amount').value,histamine:inner.querySelector('#em-hist').value,notes:inner.querySelector('#em-notes').value}:f);
+    sv('bsp_food',S.food); modal.remove(); render();
+  };
+  modal.appendChild(inner); document.body.appendChild(modal);
+}
+
+// ─── ACTIONS ─────────────────────────────────────────────────────────
+function toggleCrash() {
+  if (S.activeCrash) {
+    const end=Date.now();
+    S.crashes.push({...S.activeCrash, endTs:end, duration:end-S.activeCrash.startTs, date:today()});
+    sv('bsp_crashes',S.crashes);
+    S.activeCrash=null; sv('bsp_active_crash',null);
+    render();
+  } else {
+    showCrashModal(null);
+  }
+}
+
+function logMoodQuick(period, val) { logMood(period, val); }
+function logMood(period, val) {
+  if (!S.mood[today()]) S.mood[today()]={};
+  S.mood[today()][period]=val;
+  sv('bsp_mood',S.mood);
+  render(); showToast('Mood logged');
+}
+
+function logMeal() {
+  const name=document.getElementById('food-name').value.trim();
+  if(!name){showToast('Enter what you ate');return;}
+  S.food.push({id:uid(),ts:Date.now(),date:today(),name,amount:document.getElementById('food-amount').value.trim(),histamine:document.getElementById('food-histamine').value,suspectedTrigger:document.getElementById('food-trigger').checked,notes:document.getElementById('food-notes').value.trim()});
+  sv('bsp_food',S.food);
+  ['food-name','food-amount','food-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('food-histamine').value=''; document.getElementById('food-trigger').checked=false;
+  render(); showToast('Meal logged');
+}
+
+function logWater() {
+  S.water.push({id:uid(),ts:Date.now(),date:today(),ml:S.settings.bottleML});
+  sv('bsp_water',S.water); render();
+}
+
+function logSalt() {
+  const val=parseInt(document.getElementById('salt-input').value); if(!val)return;
+  S.salt.push({id:uid(),ts:Date.now(),date:today(),mg:val});
+  sv('bsp_salt',S.salt); document.getElementById('salt-input').value=''; render();
+}
+
+function logActivity() {
+  if(!selActType){showToast('Select an activity type');return;}
+  let actType=selActType;
+  if(actType==='Other'){const ot=document.getElementById('act-other-text').value.trim();actType=ot||'Other';}
+  const dur=document.getElementById('act-duration').value;
+  S.activities.push({id:uid(),ts:Date.now(),date:today(),actType,duration:dur?parseInt(dur):null,exertion:selExertion,notes:document.getElementById('act-notes').value.trim()});
+  sv('bsp_activities',S.activities);
+  ['act-duration','act-notes','act-other-text'].forEach(id=>document.getElementById(id).value='');
+  selActType=null; selExertion=2; render(); showToast('Activity logged');
+}
+
+function toggleSupp(id) {
+  const arr = S.suppTaken[id] || [];
+  const t = today();
+  if (arr.includes(t)) S.suppTaken[id] = arr.filter(d=>d!==t);
+  else S.suppTaken[id] = [...arr, t];
+  sv('bsp_supp_taken',S.suppTaken); render();
+}
+// Helper: was supplement taken on a given date?
+function suppTakenOn(suppId, date) {
+  return (S.suppTaken[suppId]||[]).includes(date);
+}
+
+function addSupplement() {
+  const name=document.getElementById('supp-name').value.trim(); if(!name)return;
+  S.supplements.push({id:uid(),name,dose:document.getElementById('supp-dose').value.trim()});
+  sv('bsp_supplements',S.supplements);
+  ['supp-name','supp-dose'].forEach(id=>document.getElementById(id).value='');
+  render();
+}
+
+function saveBottleSize() { const v=parseInt(document.getElementById('settings-bottle').value); if(v>0){S.settings.bottleML=v;sv('bsp_settings',S.settings);render();} }
+function saveWaterTarget() { const v=parseInt(document.getElementById('settings-water-target').value); if(v>0){S.settings.waterTarget=v;sv('bsp_settings',S.settings);render();} }
+
+// ─── EXPORT ──────────────────────────────────────────────────────────
+function buildExport(d) {
+  const waterItems = S.water.filter(i=>i.date===d);
+  // Include active crash if it started on this day and hasn't ended
+  const activeCrashForDay = (S.activeCrash && S.activeCrash.startTs && new Date(S.activeCrash.startTs).toISOString().slice(0,10)===d)
+    ? [{...S.activeCrash, status:'active', date:d}] : [];
+  const allCrashes = [...S.crashes.filter(i=>i.date===d), ...activeCrashForDay];
+  return {
+    date: d,
+    mood: S.mood[d] || {},
+    food: S.food.filter(i=>i.date===d),
+    water: {
+      count: waterItems.length,
+      mlPerBottle: S.settings.bottleML,
+      totalML: waterItems.length * S.settings.bottleML,
+      target_bottles: S.settings.waterTarget,
+    },
+    salt_mg: S.salt.filter(i=>i.date===d).reduce((a,i)=>a+(i.mg||0),0),
+    crashes: allCrashes,
+    activities: S.activities.filter(i=>i.date===d),
+    supplements: {
+      definitions: S.supplements,
+      taken: S.supplements.filter(s=>suppTakenOn(s.id,d)).map(s=>({id:s.id,name:s.name,dose:s.dose})),
+      not_taken: S.supplements.filter(s=>!suppTakenOn(s.id,d)).map(s=>({id:s.id,name:s.name,dose:s.dose})),
+    },
+  };
+}
+function exportData() {
+  const blob=new Blob([JSON.stringify(buildExport(today()),null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mcas_pots_'+today()+'.json';a.click();
+}
+function exportAllData() {
+  // Union of all days across every data type including mood
+  const daySet = new Set([
+    ...S.food.map(i=>i.date),
+    ...S.water.map(i=>i.date),
+    ...S.salt.map(i=>i.date),
+    ...S.crashes.map(i=>i.date),
+    ...S.activities.map(i=>i.date),
+    ...Object.keys(S.mood),
+  ]);
+  // Also include today if anything active
+  daySet.add(today());
+  const days = [...daySet].filter(Boolean).sort();
+  const payload = {
+    exported_at: new Date().toISOString(),
+    supplement_definitions: S.supplements,
+    settings: S.settings,
+    days: days.map(d=>buildExport(d)),
+  };
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mcas_pots_full_history_'+today()+'.json';a.click();
+}
+function clearToday() {
+  if(!confirm('Clear all of today\'s logs?'))return;
+  const t=today();
+  ['food','water','salt','crashes','activities'].forEach(k=>{S[k]=S[k].filter(i=>i.date!==t);sv('bsp_'+k,S[k]);});
+  // Clear mood for today
+  delete S.mood[t]; sv('bsp_mood',S.mood);
+  // Clear any active crash that started today
+  if (S.activeCrash && new Date(S.activeCrash.startTs).toISOString().slice(0,10)===t) {
+    S.activeCrash=null; sv('bsp_active_crash',null);
+  }
+  render();
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────────
+let toastTimer=null;
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.opacity='1';
+  if(toastTimer)clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.style.opacity='0',2000);
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
