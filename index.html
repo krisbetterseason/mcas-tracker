@@ -142,7 +142,7 @@
   .nav-item.active .nav-icon { opacity: 1; }
 
   /* SCREENS */
-  .screen { display: none; padding: 16px 16px 32px; }
+  .screen { display: none; padding: 16px 16px 90px; }
   .screen.active { display: block; }
 
   /* TYPOGRAPHY */
@@ -203,8 +203,9 @@
   .stat {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: var(--r); padding: 14px;
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-sm); transition: background 0.12s;
   }
+  .stat:active { background: var(--surface2); }
   .stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 6px; }
   .stat-val { font-size: 26px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
   .stat-unit { font-size: 12px; color: var(--text2); font-weight: 400; }
@@ -364,7 +365,7 @@
   .export-btn { width: 100%; padding: 12px; border-radius: var(--rs); border: 1.5px solid var(--border-med); background: var(--surface2); font-size: 14px; cursor: pointer; color: var(--text); margin-top: 8px; font-family: inherit; font-weight: 500; }
 
   /* TOAST */
-  #toast { position: fixed; bottom: max(env(safe-area-inset-bottom),20px); left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 20px; border-radius: var(--pill); font-size: 13px; font-weight: 600; z-index: 999; opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; }
+  #toast { position: fixed; bottom: calc(max(env(safe-area-inset-bottom),0px) + 72px); left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 20px; border-radius: var(--pill); font-size: 13px; font-weight: 600; z-index: 999; opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; }
 
   /* MOOD CARD */
   .mood-card { background: var(--mood-bg); border: 1px solid var(--border); border-radius: var(--r); padding: 14px; margin-bottom: 10px; }
@@ -441,6 +442,30 @@
     background: var(--bg); color: var(--text);
     font-family: inherit;
   }
+
+  /* Bottom tab bar */
+  .bottom-tab-bar {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 430px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: stretch;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    z-index: 60;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.06);
+  }
+  .btab {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 3px; padding: 10px 4px 8px;
+    cursor: pointer; border: none; background: none;
+    font-size: 10px; font-weight: 600; color: var(--text3);
+    transition: color 0.12s; letter-spacing: 0.02em;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btab:active { opacity: 0.7; }
+  .btab.active { color: var(--crash-fg); }
+  .btab svg { width: 22px; height: 22px; }
+
 </style>
 </head>
 <body>
@@ -510,10 +535,10 @@
     <div id="crash-active-zone"></div>
 
     <div class="stat-grid">
-      <div class="stat"><div class="stat-label">Water</div><div><span class="stat-val" id="stat-water">0</span> <span class="stat-unit">bottles</span></div></div>
-      <div class="stat"><div class="stat-label">Crashes</div><div><span class="stat-val" id="stat-crashes">0</span> <span class="stat-unit">today</span></div></div>
-      <div class="stat"><div class="stat-label">Meals</div><div><span class="stat-val" id="stat-meals">0</span> <span class="stat-unit">logged</span></div></div>
-      <div class="stat"><div class="stat-label">Activities</div><div><span class="stat-val" id="stat-supps">0</span> <span class="stat-unit">today</span></div></div>
+      <div class="stat" style="cursor:pointer;" onclick="goTab('food')"><div class="stat-label">Water</div><div><span class="stat-val" id="stat-water">0</span> <span class="stat-unit">bottles</span></div></div>
+      <div class="stat" style="cursor:pointer;" onclick="goTab('crash')"><div class="stat-label">Crashes</div><div><span class="stat-val" id="stat-crashes">0</span> <span class="stat-unit">today</span></div></div>
+      <div class="stat" style="cursor:pointer;" onclick="goTab('food')"><div class="stat-label">Meals</div><div><span class="stat-val" id="stat-meals">0</span> <span class="stat-unit">logged</span></div></div>
+      <div class="stat" style="cursor:pointer;" onclick="goTab('activity')"><div class="stat-label">Activities</div><div><span class="stat-val" id="stat-supps">0</span> <span class="stat-unit">today</span></div></div>
     </div>
 
     <div id="mood-home-card"></div>
@@ -533,7 +558,7 @@
       </div>
     </div>
 
-    <div class="section-title" style="margin-top:20px;">Crash Log</div>
+    <div class="section-title" id="crash-log-section-title" style="margin-top:20px;">Crash Log</div>
     <button id="crash-btn" class="crash-start-btn" onclick="toggleCrash()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
       Start Crash
@@ -646,6 +671,11 @@
 
   <!-- ACTIVITY -->
   <div id="screen-activity" class="screen">
+    <div class="section-title" style="margin-top:4px;">Last 14 days</div>
+    <div class="card"><div id="activity-chart"></div></div>
+    <div class="section-title">Activity log</div>
+    <div class="card" style="padding:0 16px;"><div id="activity-log-full"></div></div>
+    <div class="section-title">Log activity</div>
     <div class="card">
       <div class="card-title" style="color:var(--act-fg);">What did you do?</div>
       <div class="act-grid" id="act-grid"></div>
@@ -680,8 +710,6 @@
       </div>
       <button class="btn-primary" style="background:var(--act-fg);color:#fff;margin-top:14px;" onclick="logActivity()">Log Activity</button>
     </div>
-    <div class="section-title">Today's Activity</div>
-    <div class="card" style="padding:0 16px;"><div id="activity-log-list"></div></div>
   </div>
 
   <!-- CRASHES -->
@@ -696,15 +724,23 @@
   <div id="screen-supps" class="screen">
     <div class="section-title" style="margin-top:4px;">7-Day Adherence</div>
     <div class="card"><div id="supp-streak"></div></div>
-    <div class="section-title">Today's Supplements & Medication</div>
-    <div class="card" style="padding:0 16px;"><div id="supp-checklist"></div></div>
+    <div class="section-title">Today's Supplements</div>
+    <div class="card" style="padding:0 16px;"><div id="supp-checklist-supplements"></div></div>
+    <div class="section-title">Today's Medication</div>
+    <div class="card" style="padding:0 16px;"><div id="supp-checklist-medication"></div></div>
     <div class="section-title">Add new</div>
     <div class="card">
       <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <input type="text" id="supp-name" placeholder="Name (e.g. Quercetin, Metoprolol)" style="flex:2;">
+        <input type="text" id="supp-name" placeholder="Name" style="flex:2;">
         <input type="text" id="supp-dose" placeholder="Dose" style="flex:1;">
       </div>
-      <button class="btn-primary" style="background:var(--supp-fg);color:#fff;" onclick="addSupplement()">Add supplement / medication</button>
+      <div style="margin-bottom:10px;">
+        <select id="supp-category" style="width:100%;">
+          <option value="supplement">Supplement</option>
+          <option value="medication">Medication</option>
+        </select>
+      </div>
+      <button class="btn-primary" style="background:var(--supp-fg);color:#fff;" onclick="addSupplement()">Add</button>
     </div>
     <div class="section-title">Today's Log</div>
     <div class="card" style="padding:0 16px;"><div id="supp-log-list"></div></div>
@@ -758,9 +794,23 @@
     <div class="card" style="padding:0 16px;">
       <div class="settings-row"><div style="font-size:14px;font-weight:500;">Bottle size (ml)</div><input type="number" class="small-input" id="settings-bottle" value="750" onchange="saveBottleSize()"></div>
       <div class="settings-row"><div style="font-size:14px;font-weight:500;">Daily water target (bottles)</div><input type="number" class="small-input" id="settings-water-target" value="8" onchange="saveWaterTarget()"></div>
-      <div class="settings-row">
-        <div style="font-size:14px;font-weight:500;">Mood reminders</div>
-        <div style="font-size:13px;color:var(--text3);">9am · 4pm</div>
+      <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:8px;padding:12px 0;">
+        <div style="font-size:14px;font-weight:500;">Mood reminder times</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:12px;color:var(--text3);">Morning</span>
+            <input type="time" id="mood-reminder-morning" value="09:00" onchange="saveMoodReminders()" style="width:110px;padding:6px 8px;font-size:13px;">
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:12px;color:var(--text3);">Afternoon</span>
+            <input type="time" id="mood-reminder-afternoon" value="16:00" onchange="saveMoodReminders()" style="width:110px;padding:6px 8px;font-size:13px;">
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:12px;color:var(--text3);">Night</span>
+            <input type="time" id="mood-reminder-night" value="21:00" onchange="saveMoodReminders()" style="width:110px;padding:6px 8px;font-size:13px;">
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);">Times control when check-in prompts appear on the home screen</div>
       </div>
       <div class="settings-row">
         <div style="font-size:14px;font-weight:500;">Appearance</div>
@@ -795,6 +845,29 @@
   </div>
 
   <div id="toast"></div>
+
+  <nav class="bottom-tab-bar" id="bottom-tab-bar">
+    <button class="btab active" id="btab-home" onclick="goTab('home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Home
+    </button>
+    <button class="btab" id="btab-food" onclick="goTab('food')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+      Food
+    </button>
+    <button class="btab" id="btab-crash" onclick="goTab('crash')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      Crashes
+    </button>
+    <button class="btab" id="btab-activity" onclick="goTab('activity')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Activity
+    </button>
+    <button class="btab" id="btab-supps" onclick="goTab('supps')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 20H4a2 2 0 01-2-2V6c0-1.1.9-2 2-2h3.93a2 2 0 011.66.9l.82 1.2a2 2 0 001.66.9H20a2 2 0 012 2v2"/><circle cx="17" cy="17" r="5"/><line x1="17" y1="15" x2="17" y2="19"/><line x1="15" y1="17" x2="19" y2="17"/></svg>
+      Supps
+    </button>
+  </nav>
 </div>
 
 <script>
@@ -821,19 +894,20 @@ const ld = (k,d) => { try { const v=localStorage.getItem(k); return v?JSON.parse
 const sv = (k,v) => { try { localStorage.setItem(k,JSON.stringify(v)); } catch {} };
 
 let S = {
-  settings:    ld('bsp_settings',    {bottleML:750, waterTarget:8}),
+  settings:    ld('bsp_settings',    {bottleML:750, waterTarget:8, moodTimes:{morning:'09:00',afternoon:'16:00',night:'21:00'}}),
   crashes:     ld('bsp_crashes',     []),
   food:        ld('bsp_food',        []),
   water:       ld('bsp_water',       []),
   salt:        ld('bsp_salt',        []),
   activities:  ld('bsp_activities',  []),
   supplements: ld('bsp_supplements', [
-    {id:'s1',name:'Vitamin C',dose:'1000mg'},
-    {id:'s2',name:'Quercetin',dose:'500mg'},
-    {id:'s3',name:'DAO enzyme',dose:'1 cap'},
-    {id:'s4',name:'Sodium (electrolytes)',dose:'1 sachet'},
-    {id:'s5',name:'Magnesium',dose:'400mg'},
+    {id:'s1',name:'Vitamin C',dose:'1000mg',category:'supplement'},
+    {id:'s2',name:'Quercetin',dose:'500mg',category:'supplement'},
+    {id:'s3',name:'DAO enzyme',dose:'1 cap',category:'supplement'},
+    {id:'s4',name:'Sodium (electrolytes)',dose:'1 sachet',category:'supplement'},
+    {id:'s5',name:'Magnesium',dose:'400mg',category:'supplement'},
   ]),
+  deletedSupplements: ld('bsp_deleted_supplements', []), // archive for history export
   suppTaken:   ld('bsp_supp_taken',  {}), // {suppId: [date, date, ...]} — array of all dates taken
   suppTakenLog: ld('bsp_supp_taken_log', {}), // {suppId: [{date, ts}, ...]}
   activeCrash: ld('bsp_active_crash',null),
@@ -848,6 +922,25 @@ let S = {
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,5);
 const today = () => { const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
 const localDate = (ts) => { const d=new Date(ts); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+
+function prefillDateTimeNow(dateId, timeId) {
+  const now = new Date();
+  const t = today();
+  const timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  const d = document.getElementById(dateId); if(d) d.value = t;
+  const ti = document.getElementById(timeId); if(ti) ti.value = timeStr;
+}
+
+function prefillNow(ids) {
+  // ids: array of {date, time} pairs
+  const now = new Date();
+  const t = today();
+  const timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  ids.forEach(({date:dId, time:tId}) => {
+    const d = document.getElementById(dId); if(d) d.value = t;
+    const ti = document.getElementById(tId); if(ti) ti.value = timeStr;
+  });
+}
 
 let timerInterval = null;
 let viewingDate = today(); // must be after today() definition
@@ -934,8 +1027,10 @@ function closeNav() { document.getElementById('drawer').classList.remove('open')
 function goTab(name) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.btab').forEach(b=>b.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   const ni = document.getElementById('nav-'+name); if(ni) ni.classList.add('active');
+  const bt = document.getElementById('btab-'+name); if(bt) bt.classList.add('active');
   if (name === 'home') viewingDate = today(); // reset to today when navigating to home
   if (name === 'food') {
     const now = new Date();
@@ -1004,7 +1099,7 @@ function renderHome() {
   const quickGrid = document.querySelector('.quick-grid');
   if (crashBtn) crashBtn.style.display = isToday ? '' : 'none';
   if (quickGrid) quickGrid.style.display = isToday ? '' : 'none';
-  const crashTitle = document.querySelector('#screen-home .section-title');
+  const crashTitle = document.getElementById('crash-log-section-title');
   if (crashTitle) crashTitle.style.display = isToday ? '' : 'none';
 
   // Show/hide crash active zone
@@ -1040,7 +1135,7 @@ function renderHome() {
 function renderRecentLogForDate(d) {
   const all = [
     ...S.food.filter(i=>i.date===d).map(i=>({ts:i.ts, id:i.id, label:i.name+(i.ingredients&&i.ingredients.length?' ('+i.ingredients.length+' ingredients)':''), type:'meal'})),
-    ...S.water.filter(i=>i.date===d).map(i=>({ts:i.ts, id:i.id, label:S.settings.bottleML+'ml water', type:'water'})),
+    ...S.water.filter(i=>i.date===d).map(i=>({ts:i.ts, id:i.id, label:(i.ml||S.settings.bottleML)+'ml water', type:'water'})),
     ...S.crashes.filter(i=>i.date===d).map(i=>({ts:i.startTs, id:i.id, label:(i.types||['Crash']).join(', ')+' · sev '+i.severity+(i.endTs?' · '+fmtDur(i.endTs-i.startTs):''), type:'crash'})),
     ...S.activities.filter(i=>i.date===d).map(i=>({ts:i.ts, id:i.id, label:i.actType+(i.duration?' · '+i.duration+'m':''), type:'activity'})),
     ...S.drinks.filter(i=>i.date===d).map(i=>({ts:i.ts, id:i.id, label:i.name+(i.amount?' — '+i.amount:''), type:'drink'})),
@@ -1071,6 +1166,10 @@ function render() {
   document.getElementById('bottle-size-display').textContent = S.settings.bottleML;
   document.getElementById('settings-bottle').value       = S.settings.bottleML;
   document.getElementById('settings-water-target').value = S.settings.waterTarget;
+  const mt = S.settings.moodTimes || {morning:'09:00',afternoon:'16:00',night:'21:00'};
+  const mrd = document.getElementById('mood-reminder-morning');   if(mrd) mrd.value = mt.morning;
+  const ard = document.getElementById('mood-reminder-afternoon'); if(ard) ard.value = mt.afternoon;
+  const nrd = document.getElementById('mood-reminder-night');     if(nrd) nrd.value = mt.night;
   applyTheme(S.settings.theme || 'auto');
   document.getElementById('salt-total').textContent = todayItems(S.salt).reduce((a,i)=>a+(i.mg||0),0);
 
@@ -1084,7 +1183,8 @@ function render() {
   renderFoodScreenWaterLog();
   renderCrashLog();
   renderCrashChart();
-  renderActivityLog();
+  renderActivityChart();
+  renderActivityLogFull();
   renderSuppChecklist();
   renderSuppStreak();
   renderSuppLog();
@@ -1127,11 +1227,16 @@ function renderCrashZone() {
 // ─── MOOD HOME CARD ──────────────────────────────────────────────────
 function renderMoodHomeCard() {
   const el = document.getElementById('mood-home-card');
-  const tod = S.mood[today()] || {};
+  const isViewingToday = viewingDate === today();
+  const tod = S.mood[viewingDate] || {};
   const hour = new Date().getHours();
-  const needMorning   = tod.morning   === undefined && hour >= 6;
-  const needAfternoon = tod.afternoon === undefined && hour >= 14;
-  const needNight     = tod.night     === undefined && hour >= 20;
+  const mt = S.settings.moodTimes || {morning:'09:00',afternoon:'16:00',night:'21:00'};
+  const mHour = parseInt((mt.morning||'09:00').split(':')[0]);
+  const aHour = parseInt((mt.afternoon||'16:00').split(':')[0]);
+  const nHour = parseInt((mt.night||'21:00').split(':')[0]);
+  const needMorning   = isViewingToday && tod.morning   === undefined && hour >= mHour;
+  const needAfternoon = isViewingToday && tod.afternoon === undefined && hour >= aHour;
+  const needNight     = isViewingToday && tod.night     === undefined && hour >= nHour;
 
   if (!needMorning && !needAfternoon && !needNight && (tod.morning !== undefined || tod.afternoon !== undefined || tod.night !== undefined)) {
     const m = tod.morning   > 0 ? MOOD_EMOJIS[tod.morning-1]   : '—';
@@ -1204,7 +1309,7 @@ function renderMoodScreen() {
 function renderRecentLog() {
   const all = [
     ...todayItems(S.food).map(i=>({ts:i.ts, id:i.id, label:i.name+(i.ingredients&&i.ingredients.length?' ('+i.ingredients.length+' ingredients)':''), type:'meal'})),
-    ...todayItems(S.water).map(i=>({ts:i.ts, id:i.id, label:S.settings.bottleML+'ml water', type:'water'})),
+    ...todayItems(S.water).map(i=>({ts:i.ts, id:i.id, label:(i.ml||S.settings.bottleML)+'ml water', type:'water'})),
     ...todayItems(S.crashes).map(i=>({ts:i.startTs, id:i.id, label:(i.types||['Crash']).join(', ')+' · sev '+i.severity+(i.endTs?' · '+fmtDur(i.endTs-i.startTs):''), type:'crash'})),
     ...todayItems(S.activities).map(i=>({ts:i.ts, id:i.id, label:i.actType+(i.duration?' · '+i.duration+'m':''), type:'activity'})),
     ...todayItems(S.drinks).map(i=>({ts:i.ts, id:i.id, label:i.name+(i.amount?' — '+i.amount:''), type:'drink'})),
@@ -1237,7 +1342,7 @@ function openItemDetail(type, id) {
   } else if (type === 'water') {
     title = S.settings.bottleML + 'ml water';
     const wItem = S.water.find(i=>i.id===id);
-    title = (wItem ? wItem.ml||S.settings.bottleML : S.settings.bottleML) + 'ml water';
+    title = (wItem ? (wItem.ml||S.settings.bottleML) : S.settings.bottleML) + 'ml water';
     subtitle = wItem ? fmt(wItem.ts) : '';
   } else if (type === 'drink') {
     const item = S.drinks.find(i=>i.id===id);
@@ -1413,7 +1518,7 @@ function renderFoodScreenWaterLog() {
   const allWater = todayItems(S.water);
   const allDrinks = todayItems(S.drinks);
   const all = [
-    ...allWater.map(i=>({ts:i.ts, id:i.id, label:S.settings.bottleML+'ml water', type:'water'})),
+    ...allWater.map(i=>({ts:i.ts, id:i.id, label:(i.ml||S.settings.bottleML)+'ml water', type:'water'})),
     ...allDrinks.map(i=>({ts:i.ts, id:i.id, label:i.name+(i.amount?' — '+i.amount:'')+(i.caffeine?' · '+i.caffeine+' caffeine':''), type:'drink'})),
   ].sort((a,b)=>b.ts-a.ts);
   if(!all.length){el.innerHTML='<div style="padding:14px 0;font-size:13px;color:var(--text3);">Nothing logged yet</div>';return;}
@@ -1430,6 +1535,48 @@ function renderFoodLog() {
   const el = document.getElementById('food-log-list');
   if (!items.length) { el.innerHTML='<div style="padding:14px 0;font-size:13px;color:var(--text3);">Nothing logged yet</div>'; return; }
   el.innerHTML = items.map(i=>`<div class="log-item">${logIcon('meal')}<div style="flex:1;"><div class="log-time">${fmt(i.ts)}</div><div class="log-main">${i.name}</div>${(i.ingredients&&i.ingredients.length)?`<div class="log-sub">${i.ingredients.map(ing=>ing.name+(ing.amount?' ('+ing.amount+')':'')).join(', ')}</div>`:''}${i.histamine?`<div class="log-sub">Histamine: ${i.histamine}</div>`:''}${i.suspectedTrigger?'<span class="tag" style="background:var(--crash-bg);color:var(--crash-fg);margin-top:4px;display:inline-flex;">⚠ Trigger</span>':''}${i.notes?`<div class="log-sub">${i.notes}</div>`:''}<button class="edit-link" onclick="editMeal('${i.id}')">Edit</button></div></div>`).join('');
+}
+
+function renderActivityChart() {
+  const el = document.getElementById('activity-chart'); if(!el) return;
+  const days = [];
+  for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));}
+  const maxActs = Math.max(1,...days.map(d=>S.activities.filter(a=>a.date===d).length));
+  el.innerHTML=`<div style="display:flex;gap:3px;align-items:flex-end;height:64px;margin-bottom:6px;">
+    ${days.map(d=>{
+      const acts = S.activities.filter(a=>a.date===d);
+      const count = acts.length;
+      const avgEx = count ? Math.round(acts.reduce((s,a)=>s+(a.exertion||2),0)/count*10)/10 : 0;
+      const h = count ? Math.max(8, Math.round(count/maxActs*56)) : 3;
+      const isToday = d===today();
+      const label = (()=>{const p=d.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]).toLocaleDateString([],{day:'numeric'});})();
+      const color = count===0?'var(--border)':avgEx>=4?'var(--crash-fg)':avgEx>=3?'var(--supp-fg)':'var(--act-fg)';
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;" title="${d}: ${count} activit${count!==1?'ies':'y'}${avgEx?' avg exertion '+avgEx:''}">
+        <div style="background:${color};border-radius:3px 3px 0 0;width:100%;height:${h}px;${isToday?'outline:1.5px solid var(--act-fg);outline-offset:1px;':''}"></div>
+        <div style="font-size:8px;font-weight:600;color:${isToday?'var(--act-fg)':'var(--text3)'};">${label}</div>
+      </div>`;
+    }).join('')}
+  </div>
+  <div style="display:flex;gap:12px;font-size:11px;color:var(--text3);">
+    <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--act-fg);display:inline-block;"></span>Low exertion</span>
+    <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--supp-fg);display:inline-block;"></span>Medium</span>
+    <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--crash-fg);display:inline-block;"></span>High exertion</span>
+  </div>`;
+}
+
+function renderActivityLogFull() {
+  const el = document.getElementById('activity-log-full'); if(!el) return;
+  const items = S.activities.slice().sort((a,b)=>b.ts-a.ts).slice(0,50);
+  if(!items.length){el.innerHTML='<div style="padding:14px 0;font-size:13px;color:var(--text3);">No activities logged yet</div>';return;}
+  el.innerHTML = items.map(i=>`<div class="log-item" style="align-items:center;cursor:pointer;" onclick="openItemDetail('activity','${i.id}')">
+    ${logIcon('activity')}
+    <div style="flex:1;min-width:0;">
+      <div class="log-time">${fmtDate(i.date||today())} · ${fmt(i.ts)}</div>
+      <div class="log-main">${i.actType}${i.duration?' · '+i.duration+'m':''}</div>
+      <div class="log-sub">Exertion ${i.exertion}/5${i.notes?' · '+i.notes:''}</div>
+    </div>
+    <svg style="flex-shrink:0;opacity:0.3;margin-left:8px;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </div>`).join('');
 }
 
 function renderCrashChart() {
@@ -1493,24 +1640,30 @@ function renderActivityLog() {
 
 // ─── SUPPLEMENTS ─────────────────────────────────────────────────────
 function renderSuppChecklist() {
-  const el = document.getElementById('supp-checklist');
-  if (!S.supplements.length) {
-    el.innerHTML='<div style="padding:14px 0;font-size:13px;color:var(--text3);">No supplements added yet. Add one below.</div>';
-    return;
+  function buildList(items, elId) {
+    const el = document.getElementById(elId); if(!el) return;
+    if (!items.length) {
+      el.innerHTML='<div style="padding:12px 0;font-size:13px;color:var(--text3);">None added yet</div>';
+      return;
+    }
+    el.innerHTML = items.map(s=>{
+      const done = suppTakenOn(s.id, today());
+      const ts = suppTakenTs(s.id, today());
+      return `<div class="supp-row" style="cursor:pointer;" onclick="openSuppDetail('${s.id}')">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;font-weight:500;">${s.name}</div>
+          <div style="font-size:12px;color:var(--text2);">${s.dose}${done&&ts?' · taken '+fmt(ts):''}</div>
+        </div>
+        <div class="check-circle ${done?'done':''}" onclick="event.stopPropagation();toggleSupp('${s.id}')">
+          ${done?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}
+        </div>
+      </div>`;
+    }).join('');
   }
-  el.innerHTML = S.supplements.map(s=>{
-    const done = suppTakenOn(s.id, today());
-    const ts = suppTakenTs(s.id, today());
-    return `<div class="supp-row" style="cursor:pointer;" onclick="openSuppDetail('${s.id}')">
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:14px;font-weight:500;">${s.name}</div>
-        <div style="font-size:12px;color:var(--text2);">${s.dose}${done&&ts?' · taken '+fmt(ts):''}</div>
-      </div>
-      <div class="check-circle ${done?'done':''}" onclick="event.stopPropagation();toggleSupp('${s.id}')">
-        ${done?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}
-      </div>
-    </div>`;
-  }).join('');
+  const supps = S.supplements.filter(s=>!s.category||s.category==='supplement');
+  const meds  = S.supplements.filter(s=>s.category==='medication');
+  buildList(supps, 'supp-checklist-supplements');
+  buildList(meds,  'supp-checklist-medication');
 }
 
 function openSuppDetail(id) {
@@ -1528,7 +1681,7 @@ function openSuppDetail(id) {
       </div>
       <div>
         <div style="font-size:17px;font-weight:700;">${s.name}</div>
-        <div style="font-size:13px;color:var(--text2);">${s.dose}</div>
+        <div style="font-size:13px;color:var(--text2);">${s.dose} · <span style="color:var(--supp-fg);font-weight:500;">${s.category==="medication"?"Medication":"Supplement"}</span></div>
       </div>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;">
@@ -1539,7 +1692,7 @@ function openSuppDetail(id) {
       <button class="btn-primary" style="background:var(--crash-bg);color:var(--crash-fg);" id="sd-remove">Remove</button>
       <button class="btn-ghost" id="sd-cancel">Cancel</button>
     </div>`;
-  inner.querySelector('#sd-toggle').onclick = () => { modal.remove(); toggleSupp(id); };
+  inner.querySelector('#sd-toggle').onclick = () => { toggleSupp(id); modal.remove(); };
   inner.querySelector('#sd-edit').onclick   = () => { modal.remove(); editSuppDef(id); };
   inner.querySelector('#sd-remove').onclick = () => { modal.remove(); deleteSuppDef(id); };
   inner.querySelector('#sd-cancel').onclick = () => modal.remove();
@@ -1615,7 +1768,7 @@ function renderHistory() {
     const daySymptoms = S.symptoms.filter(i=>i.date===d);
     const items = [
       ...dayFood.map(i=>({ts:i.ts, id:i.id, label:i.name+(i.ingredients&&i.ingredients.length?' ('+i.ingredients.length+' ingredients)':''), type:'meal'})),
-      ...dayWater.map(i=>({ts:i.ts, id:i.id, label:S.settings.bottleML+'ml water', type:'water'})),
+      ...dayWater.map(i=>({ts:i.ts, id:i.id, label:(i.ml||S.settings.bottleML)+'ml water', type:'water'})),
       ...dayCrashes.map(i=>({ts:i.startTs, id:i.id, label:(i.types||['Crash']).join(', ')+' · sev '+i.severity, type:'crash'})),
       ...dayAct.map(i=>({ts:i.ts, id:i.id, label:i.actType+(i.duration?' · '+i.duration+'m':''), type:'activity'})),
       ...dayDrinks.map(i=>({ts:i.ts, id:i.id, label:i.name+(i.amount?' — '+i.amount:''), type:'drink'})),
@@ -1673,8 +1826,9 @@ function showCrashModal(editId) {
   let selSymptoms = editing ? [...(editing.symptoms||[])]     : [];
   let preActivity = editing ? (editing.preActivity||'')       : '';
   let notes       = editing ? (editing.notes||'')             : '';
-  let iceUsed     = editing ? (editing.iceUsed||false)        : false;
+  window._iceUsed = editing ? (editing.iceUsed||false) : false;
 
+  window._crashRebuild = function() { rebuild(); };
   function rebuild() {
     inner.innerHTML = `
       <div class="modal-handle"></div>
@@ -1719,8 +1873,8 @@ function showCrashModal(editId) {
           <div style="font-size:14px;font-weight:500;">Ice used</div>
           <div style="font-size:12px;color:var(--text3);">Ice pack / cold compress applied</div>
         </div>
-        <button id="ice-toggle-btn" onclick="iceUsed=!iceUsed;rebuild();" style="width:44px;height:26px;border-radius:13px;border:none;cursor:pointer;transition:background 0.15s;background:${iceUsed?'var(--water-fg)':'var(--border-med)'};position:relative;">
-          <span style="position:absolute;top:3px;left:${iceUsed?'21px':'3px'};width:20px;height:20px;border-radius:50%;background:#fff;transition:left 0.15s;display:block;"></span>
+        <button id="ice-toggle-btn" onclick="window._iceUsed=!window._iceUsed;window._crashRebuild();" style="width:44px;height:26px;border-radius:13px;border:none;cursor:pointer;transition:background 0.15s;background:${window._iceUsed?'var(--water-fg)':'var(--border-med)'};position:relative;">
+          <span style="position:absolute;top:3px;left:${window._iceUsed?'21px':'3px'};width:20px;height:20px;border-radius:50%;background:#fff;transition:left 0.15s;display:block;"></span>
         </button>
       </div>
       <textarea id="crash-notes-input" placeholder="Notes (optional)" style="width:100%;height:64px;resize:none;margin-bottom:14px;">${notes}</textarea>
@@ -1758,7 +1912,7 @@ function showCrashModal(editId) {
       if (!selTypes.length) { showToast('Select at least one crash type'); return; }
       preActivity = inner.querySelector('#crash-pre').value;
       notes       = inner.querySelector('#crash-notes-input').value;
-      iceUsed = iceUsed; // captured in closure
+      const iceUsed = window._iceUsed||false;
       if (editId) {
         const crashDateEl  = inner.querySelector('#crash-date');
         const crashStartEl = inner.querySelector('#crash-start-time');
@@ -1910,6 +2064,7 @@ function logMeal() {
   });
   sv('bsp_food',S.food);
   ['food-name','food-notes','ingredient-name','ingredient-amount','food-date','food-time'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); 
+  prefillDateTimeNow('food-date','food-time');
   document.getElementById('food-histamine').value='';
   document.getElementById('food-trigger').checked=false;
   pendingIngredients=[];
@@ -1968,7 +2123,9 @@ function logActivity() {
   const ts = startTs;
   S.activities.push({id:uid(),ts,date:startDate,actType,duration:durInt,startTs,endTs,exertion:selExertion,notes:document.getElementById('act-notes').value.trim()});
   sv('bsp_activities',S.activities);
-  ['act-notes','act-other-text','act-start','act-end','act-start-date','act-end-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); const dd=document.getElementById('act-duration-display');if(dd)dd.textContent='—'; 
+  ['act-notes','act-other-text','act-start','act-end','act-start-date','act-end-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); const dd=document.getElementById('act-duration-display');if(dd)dd.textContent='—';
+  prefillNow([{date:'act-start-date',time:'act-start'},{date:'act-end-date',time:'act-end'}]);
+  if(typeof calcActDuration==='function') calcActDuration();
   selActType=null; selExertion=2; render(); showToast('Activity logged');
 }
 
@@ -2003,9 +2160,11 @@ function suppTakenTs(suppId, date) {
 
 function addSupplement() {
   const name=document.getElementById('supp-name').value.trim(); if(!name)return;
-  S.supplements.push({id:uid(),name,dose:document.getElementById('supp-dose').value.trim()});
+  const category = document.getElementById('supp-category').value || 'supplement';
+  S.supplements.push({id:uid(),name,dose:document.getElementById('supp-dose').value.trim(),category});
   sv('bsp_supplements',S.supplements);
   ['supp-name','supp-dose'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('supp-category').value='supplement';
   render();
 }
 
@@ -2018,16 +2177,19 @@ function renderCustomActList() {
     return `<div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:var(--rs);padding:8px 12px;">
       <span style="flex:1;font-size:14px;">${a.label}</span>
       ${a.builtin
-        ? '<span style="font-size:11px;color:var(--text3);">default</span>'
+        ? `<button class="edit-link" style="color:${(S.hiddenActTypes||[]).includes(a.label)?'var(--act-fg)':'var(--crash-fg)'};" onclick="deleteDefaultActType('${safeLabel}')">${(S.hiddenActTypes||[]).includes(a.label)?'Restore':'Delete'}</button>`
         : `<button class="edit-link" style="color:var(--crash-fg);" onclick="removeCustomActType('${safeLabel}')">Remove</button>`}
     </div>`;}).join('');
 }
 
-function toggleDefaultActType(label, btn) {
+function deleteDefaultActType(label) {
   if (!S.hiddenActTypes) S.hiddenActTypes = ld('bsp_hidden_act_types', []);
-  const idx = S.hiddenActTypes.indexOf(label);
-  if (idx > -1) { S.hiddenActTypes.splice(idx, 1); btn.textContent = 'Hide'; }
-  else           { S.hiddenActTypes.push(label);    btn.textContent = 'Show'; }
+  if (S.hiddenActTypes.includes(label)) {
+    // Already deleted — restore it
+    S.hiddenActTypes = S.hiddenActTypes.filter(l=>l!==label);
+  } else {
+    S.hiddenActTypes.push(label);
+  }
   sv('bsp_hidden_act_types', S.hiddenActTypes);
   render();
 }
@@ -2049,6 +2211,17 @@ function removeCustomActType(label) {
   render();
 }
 
+function saveMoodReminders() {
+  if (!S.settings.moodTimes) S.settings.moodTimes = {morning:'09:00',afternoon:'16:00',night:'21:00'};
+  const m = document.getElementById('mood-reminder-morning');
+  const a = document.getElementById('mood-reminder-afternoon');
+  const n = document.getElementById('mood-reminder-night');
+  if (m) S.settings.moodTimes.morning   = m.value;
+  if (a) S.settings.moodTimes.afternoon = a.value;
+  if (n) S.settings.moodTimes.night     = n.value;
+  sv('bsp_settings', S.settings);
+}
+
 function saveBottleSize() { const v=parseInt(document.getElementById('settings-bottle').value); if(v>0){S.settings.bottleML=v;sv('bsp_settings',S.settings);render();} }
 function saveWaterTarget() { const v=parseInt(document.getElementById('settings-water-target').value); if(v>0){S.settings.waterTarget=v;sv('bsp_settings',S.settings);render();} }
 
@@ -2066,7 +2239,7 @@ function buildExport(d) {
     water: {
       count: waterItems.length,
       mlPerBottle: S.settings.bottleML,
-      totalML: waterItems.length * S.settings.bottleML,
+      totalML: waterItems.reduce((s,i)=>s+(i.ml||S.settings.bottleML),0),
       target_bottles: S.settings.waterTarget,
     },
     salt_mg: S.salt.filter(i=>i.date===d).reduce((a,i)=>a+(i.mg||0),0),
@@ -2075,7 +2248,7 @@ function buildExport(d) {
     drinks: S.drinks.filter(i=>i.date===d),
     symptoms: S.symptoms.filter(i=>i.date===d),
     supplements: {
-      definitions: S.supplements,
+      definitions: [...S.supplements, ...(S.deletedSupplements||[]).map(s=>({...s,deleted:true}))],
       taken: S.supplements.filter(s=>suppTakenOn(s.id,d)).map(s=>({id:s.id,name:s.name,dose:s.dose})),
       not_taken: S.supplements.filter(s=>!suppTakenOn(s.id,d)).map(s=>({id:s.id,name:s.name,dose:s.dose})),
     },
@@ -2116,7 +2289,10 @@ function editWater(id) {
   const modal=document.createElement('div'); modal.id='edit-modal'; modal.className='modal-bg';
   const inner=document.createElement('div'); inner.className='modal-sheet';
   inner.innerHTML=`<div class="modal-handle"></div><div class="modal-title">Edit water entry</div>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;">${item.ml||S.settings.bottleML}ml bottle</div>
+    <div style="margin-bottom:12px;">
+      <div class="when-label" style="margin-bottom:6px;">Bottle size (ml)</div>
+      <input type="number" id="ew-ml" value="${item.ml||S.settings.bottleML}" style="width:120px;">
+    </div>
     <div class="when-row" style="margin-bottom:14px;">
       <div class="when-label">When</div>
       <div class="dt-pair">
@@ -2131,7 +2307,8 @@ function editWater(id) {
   inner.querySelector('#ew-save').onclick=()=>{
     const newDate=inner.querySelector('#ew-date').value||item.date;
     const newTs=timeToTs(inner.querySelector('#ew-time').value,newDate)||item.ts;
-    S.water=S.water.map(w=>w.id===id?{...w,date:newDate,ts:newTs}:w);
+    const newMl=parseInt(inner.querySelector('#ew-ml').value)||item.ml||S.settings.bottleML;
+    S.water=S.water.map(w=>w.id===id?{...w,date:newDate,ts:newTs,ml:newMl}:w);
     sv('bsp_water',S.water); modal.remove(); render();
   };
   modal.appendChild(inner); document.body.appendChild(modal);
@@ -2263,7 +2440,7 @@ function renderSuppLog() {
   if (!todayEntries.length) { el.innerHTML='<div style="padding:14px 0;font-size:13px;color:var(--text3);">None taken yet today</div>'; return; }
   el.innerHTML = todayEntries.map(e=>`<div class="log-item">
     ${logIcon('supplement')}
-    <div style="flex:1;"><div class="log-time">${fmt(e.ts)}</div><div class="log-main">${e.supp.name}</div><div class="log-sub">${e.supp.dose}</div></div>
+    <div style="flex:1;"><div class="log-time">${fmt(e.ts)}</div><div class="log-main">${e.supp.name}</div><div class="log-sub">${e.supp.dose} · ${e.supp.category==="medication"?"Medication":"Supplement"}</div></div>
   </div>`).join('');
 }
 
@@ -2274,7 +2451,7 @@ function renderSuppManage() {
   el.innerHTML = S.supplements.map(s=>`<div class="supp-row">
     <div style="flex:1;">
       <div style="font-size:14px;font-weight:500;">${s.name}</div>
-      <div style="font-size:12px;color:var(--text2);">${s.dose}</div>
+      <div style="font-size:12px;color:var(--text2);">${s.dose} · <span style="color:var(--supp-fg);">${s.category==="medication"?"Medication":"Supplement"}</span></div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
       <button class="edit-link" onclick="editSuppDef('${s.id}')">Edit</button>
@@ -2287,22 +2464,33 @@ function editSuppDef(id) {
   const item = S.supplements.find(s=>s.id===id); if(!item)return;
   const modal=document.createElement('div'); modal.className='modal-bg';
   const inner=document.createElement('div'); inner.className='modal-sheet';
-  inner.innerHTML=`<div class="modal-handle"></div><div class="modal-title">Edit supplement</div>
+  inner.innerHTML=`<div class="modal-handle"></div><div class="modal-title">Edit</div>
     <input type="text" id="esd-name" value="${item.name}" style="margin-bottom:8px;">
-    <input type="text" id="esd-dose" value="${item.dose||''}" placeholder="Dose" style="margin-bottom:14px;">
+    <input type="text" id="esd-dose" value="${item.dose||''}" placeholder="Dose" style="margin-bottom:8px;">
+    <select id="esd-category" style="width:100%;margin-bottom:14px;">
+      <option value="supplement" ${(item.category||'supplement')==='supplement'?'selected':''}>Supplement</option>
+      <option value="medication" ${item.category==='medication'?'selected':''}>Medication</option>
+    </select>
     <div style="display:flex;gap:10px;">
       <button class="btn-ghost" style="flex:1;" onclick="this.closest('.modal-bg').remove()">Cancel</button>
       <button class="btn-primary" style="flex:2;background:var(--supp-fg);color:#fff;" id="esd-save">Save</button>
     </div>`;
   inner.querySelector('#esd-save').onclick=()=>{
-    S.supplements=S.supplements.map(s=>s.id===id?{...s,name:inner.querySelector('#esd-name').value.trim()||s.name,dose:inner.querySelector('#esd-dose').value.trim()}:s);
+    S.supplements=S.supplements.map(s=>s.id===id?{...s,name:inner.querySelector('#esd-name').value.trim()||s.name,dose:inner.querySelector('#esd-dose').value.trim(),category:inner.querySelector('#esd-category').value}:s);
     sv('bsp_supplements',S.supplements); modal.remove(); render();
   };
   modal.appendChild(inner); document.body.appendChild(modal);
 }
 
 function deleteSuppDef(id) {
-  if(!confirm('Remove this supplement?')) return;
+  if(!confirm('Remove from checklist? History and past logs are unaffected.')) return;
+  const item = S.supplements.find(s=>s.id===id);
+  if (item) {
+    // Archive so exports can still show the name
+    if (!S.deletedSupplements) S.deletedSupplements = [];
+    S.deletedSupplements.push({...item, deletedAt: Date.now()});
+    sv('bsp_deleted_supplements', S.deletedSupplements);
+  }
   S.supplements = S.supplements.filter(s=>s.id!==id);
   sv('bsp_supplements',S.supplements); render();
 }
@@ -2320,8 +2508,10 @@ function setSymType(type) {
 
 function buildSymChipGrid() {
   const el = document.getElementById('sym-chip-grid'); if(!el) return;
-  if (el.children.length > 0) return; // don't reset if already built
-  el.innerHTML = CRASH_SYMPTOMS.map(s=>`<button class="chip" onclick="this.classList.toggle('sel');document.getElementById('sym-custom').value='';"  data-sym="${s}">${s}</button>`).join('');
+  // Preserve currently selected chips across rebuilds
+  const prevSel = new Set([...el.querySelectorAll('.chip.sel')].map(b=>b.getAttribute('data-sym')));
+  if (el.children.length > 0 && prevSel.size === 0) return; // no need to rebuild if nothing selected and already built
+  el.innerHTML = CRASH_SYMPTOMS.map(s=>`<button class="chip ${prevSel.has(s)?'sel':''}" onclick="this.classList.toggle('sel');document.getElementById('sym-custom').value='';" data-sym="${s}">${s}</button>`).join('');
 }
 
 function buildSymSevRow() {
@@ -2348,13 +2538,14 @@ function logSymptom() {
   const symEndDate   = document.getElementById('sym-end-date')   ? document.getElementById('sym-end-date').value   || today() : today();
   const ts = timeToTs(startVal, symStartDate) || Date.now();
   S.symptoms.push({
-    id:uid(), ts, date:today(), symptom, severity:selSymSev,
+    id:uid(), ts, date:symStartDate, symptom, severity:selSymSev,
     allDay, startTs: allDay?null:ts,
     endTs: allDay?null:timeToTs(endVal,symEndDate),
     notes: document.getElementById('sym-notes').value.trim(),
   });
   sv('bsp_symptoms', S.symptoms);
   ['sym-custom','sym-notes','sym-start','sym-end','sym-start-date','sym-end-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); 
+  prefillNow([{date:'sym-start-date',time:'sym-start'},{date:'sym-end-date',time:'sym-end'}]);
   document.querySelectorAll('#sym-chip-grid .chip.sel').forEach(b=>b.classList.remove('sel'));
   selSymSev=3; buildSymSevRow();
   render(); showToast('Symptom logged');
