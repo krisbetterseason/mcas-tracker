@@ -1236,7 +1236,9 @@ function openItemDetail(type, id) {
     subtitle = [ingStr, item.histamine?'Histamine: '+item.histamine:'', item.notes].filter(Boolean).join(' · ');
   } else if (type === 'water') {
     title = S.settings.bottleML + 'ml water';
-    subtitle = 'Tap remove to delete this entry';
+    const wItem = S.water.find(i=>i.id===id);
+    title = (wItem ? wItem.ml||S.settings.bottleML : S.settings.bottleML) + 'ml water';
+    subtitle = wItem ? fmt(wItem.ts) : '';
   } else if (type === 'drink') {
     const item = S.drinks.find(i=>i.id===id);
     if (!item) return;
@@ -1272,22 +1274,21 @@ function openItemDetail(type, id) {
       </div>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;">
-      ${type !== 'water' ? `<button class="btn-primary" style="background:var(--surface2);color:var(--text);" id="detail-edit">Edit</button>` : ''}
+      <button class="btn-primary" style="background:var(--surface2);color:var(--text);" id="detail-edit">Edit</button>
       <button class="btn-primary" style="background:var(--crash-bg);color:var(--crash-fg);" id="detail-delete">Remove</button>
       <button class="btn-ghost" id="detail-cancel">Cancel</button>
     </div>`;
 
-  if (type !== 'water') {
-    const editBtn = inner.querySelector('#detail-edit');
-    if (editBtn) editBtn.onclick = () => {
-      modal.remove();
-      if (type === 'meal')     editMeal(id);
-      if (type === 'crash')    showCrashModal(id);
-      if (type === 'activity') editActivity(id);
-      if (type === 'drink')    editDrink(id);
-      if (type === 'symptom')  editSymptom(id);
-    };
-  }
+  const editBtn = inner.querySelector('#detail-edit');
+  if (editBtn) editBtn.onclick = () => {
+    modal.remove();
+    if (type === 'meal')     editMeal(id);
+    if (type === 'crash')    showCrashModal(id);
+    if (type === 'activity') editActivity(id);
+    if (type === 'drink')    editDrink(id);
+    if (type === 'symptom')  editSymptom(id);
+    if (type === 'water')    editWater(id);
+  };
 
   inner.querySelector('#detail-delete').onclick = () => {
     modal.remove();
@@ -2107,6 +2108,33 @@ function exportAllData() {
   };
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mcas_pots_full_history_'+today()+'.json';a.click();
+}
+
+function editWater(id) {
+  const existing=document.getElementById('edit-modal'); if(existing)existing.remove();
+  const item=S.water.find(w=>w.id===id); if(!item)return;
+  const modal=document.createElement('div'); modal.id='edit-modal'; modal.className='modal-bg';
+  const inner=document.createElement('div'); inner.className='modal-sheet';
+  inner.innerHTML=`<div class="modal-handle"></div><div class="modal-title">Edit water entry</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;">${item.ml||S.settings.bottleML}ml bottle</div>
+    <div class="when-row" style="margin-bottom:14px;">
+      <div class="when-label">When</div>
+      <div class="dt-pair">
+        <input type="date" id="ew-date" value="${item.date||today()}">
+        <input type="time" id="ew-time" value="${item.ts?new Date(item.ts).toTimeString().slice(0,5):''}">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn-ghost" style="flex:1;" onclick="document.getElementById('edit-modal').remove()">Cancel</button>
+      <button class="btn-primary" style="flex:2;background:var(--water-fg);color:#fff;" id="ew-save">Save</button>
+    </div>`;
+  inner.querySelector('#ew-save').onclick=()=>{
+    const newDate=inner.querySelector('#ew-date').value||item.date;
+    const newTs=timeToTs(inner.querySelector('#ew-time').value,newDate)||item.ts;
+    S.water=S.water.map(w=>w.id===id?{...w,date:newDate,ts:newTs}:w);
+    sv('bsp_water',S.water); modal.remove(); render();
+  };
+  modal.appendChild(inner); document.body.appendChild(modal);
 }
 
 function editDrink(id) {
