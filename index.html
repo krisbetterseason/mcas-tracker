@@ -81,6 +81,18 @@
 
   .app { max-width: 430px; margin: 0 auto; min-height: 100vh; position: relative; }
 
+  .nav-arrow {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--surface); border: 1px solid var(--border-med);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: var(--text2); box-shadow: var(--shadow-sm); transition: all 0.12s;
+    flex-shrink: 0;
+  }
+  .nav-arrow:active { opacity: 0.7; transform: scale(0.95); }
+  .nav-arrow:disabled { opacity: 0.25; cursor: default; }
+  .date-nav { display: none; align-items: center; gap: 8px; }
+  .date-nav.visible { display: flex; }
+
   /* TOP BAR */
   .top-bar {
     display: flex; align-items: center; justify-content: space-between;
@@ -92,7 +104,7 @@
     backdrop-filter: blur(12px);
   }
   .top-bar-left { display: flex; align-items: baseline; gap: 8px; }
-  .top-bar-title { font-size: 20px; font-weight: 700; letter-spacing: -0.4px; color: var(--text); }
+  .top-bar-title { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); }
   .top-date { font-size: 13px; color: var(--text3); font-weight: 400; }
   .menu-btn {
     width: 36px; height: 36px; border-radius: 10px;
@@ -404,6 +416,31 @@
     --supp-bg: #1e1608;  --supp-fg: #f0b840;
     --mood-bg: #18102a;  --mood-fg: #c084fc;
   }
+
+  /* Styled date/time inputs */
+  .when-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text3); margin-bottom: 6px;
+  }
+  .when-row { margin-bottom: 14px; }
+  .when-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .dt-pair { display: flex; gap: 8px; }
+  .dt-pair input[type=date], .dt-pair input[type=time] {
+    flex: 1; padding: 9px 10px;
+    border: 1.5px solid var(--border-med); border-radius: var(--rs);
+    font-size: 13px; font-weight: 500;
+    background: var(--bg); color: var(--text);
+    font-family: inherit; min-width: 0;
+  }
+  .dt-pair input[type=date] { flex: 1.4; }
+  .dt-pair input[type=time] { flex: 1; }
+  .when-input {
+    width: 100%; padding: 9px 10px;
+    border: 1.5px solid var(--border-med); border-radius: var(--rs);
+    font-size: 13px; font-weight: 500;
+    background: var(--bg); color: var(--text);
+    font-family: inherit;
+  }
 </style>
 </head>
 <body>
@@ -411,11 +448,20 @@
   <div class="top-bar">
     <div class="top-bar-left">
       <div class="top-bar-title" id="screen-title">Today</div>
-      <div class="top-date" id="top-date"></div>
     </div>
-    <button class="menu-btn" onclick="openNav()" aria-label="Menu">
-      <span></span><span></span><span></span>
-    </button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="date-nav" id="date-nav">
+        <button class="nav-arrow" id="nav-prev" onclick="changeViewDay(-1)" title="Previous day">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+<button class="nav-arrow" id="nav-next" onclick="changeViewDay(1)" title="Next day">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+      <button class="menu-btn" onclick="openNav()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
   </div>
 
   <div class="overlay" id="overlay" onclick="closeNav()"></div>
@@ -443,7 +489,11 @@
     </button>
     <button class="nav-item" id="nav-supps" onclick="goTab('supps')">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 20H4a2 2 0 01-2-2V6c0-1.1.9-2 2-2h3.93a2 2 0 011.66.9l.82 1.2a2 2 0 001.66.9H20a2 2 0 012 2v2"/><circle cx="17" cy="17" r="5"/><line x1="17" y1="15" x2="17" y2="19"/><line x1="15" y1="17" x2="19" y2="17"/></svg>
-      Supplements
+      Supplements & Medication
+    </button>
+    <button class="nav-item" id="nav-symptoms" onclick="goTab('symptoms')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+      Symptoms
     </button>
     <button class="nav-item" id="nav-history" onclick="goTab('history')">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -463,7 +513,7 @@
       <div class="stat"><div class="stat-label">Water</div><div><span class="stat-val" id="stat-water">0</span> <span class="stat-unit">bottles</span></div></div>
       <div class="stat"><div class="stat-label">Crashes</div><div><span class="stat-val" id="stat-crashes">0</span> <span class="stat-unit">today</span></div></div>
       <div class="stat"><div class="stat-label">Meals</div><div><span class="stat-val" id="stat-meals">0</span> <span class="stat-unit">logged</span></div></div>
-      <div class="stat"><div class="stat-label">Supplements</div><div><span class="stat-val" id="stat-supps">0</span> <span class="stat-unit">taken</span></div></div>
+      <div class="stat"><div class="stat-label">Activities</div><div><span class="stat-val" id="stat-supps">0</span> <span class="stat-unit">today</span></div></div>
     </div>
 
     <div id="mood-home-card"></div>
@@ -497,6 +547,7 @@
   <div id="screen-mood" class="screen">
     <div id="mood-check-morning"></div>
     <div id="mood-check-afternoon"></div>
+    <div id="mood-check-night"></div>
     <div class="section-title">7-Day Mood & Energy</div>
     <div class="card"><div id="mood-history-chart"></div></div>
   </div>
@@ -508,23 +559,62 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/></svg>
         Log Meal
       </div>
-      <input type="text" id="food-name" placeholder="What did you eat?" style="margin-bottom:8px;background:var(--surface);">
+      <input type="text" id="food-name" placeholder="Meal name (e.g. Breakfast bowl)" style="margin-bottom:8px;background:var(--surface);">
       <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <input type="text" id="food-amount" placeholder="Amount" style="flex:1;background:var(--surface);">
-        <select id="food-histamine" style="width:130px;background:var(--surface);">
+        <select id="food-histamine" style="flex:1;background:var(--surface);">
+          <option value="">Overall histamine?</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--crash-fg);cursor:pointer;white-space:nowrap;">
+          <input type="checkbox" id="food-trigger" style="width:auto;"> Immediate trigger?
+        </label>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--meal-fg);margin-bottom:8px;">Ingredients</div>
+      <div id="ingredient-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <input type="text" id="ingredient-name" placeholder="Ingredient (e.g. banana)" style="flex:2;background:var(--surface);">
+        <input type="text" id="ingredient-amount" placeholder="Amount" style="flex:1;background:var(--surface);">
+        <button class="btn-ghost" style="white-space:nowrap;padding:8px 10px;" onclick="addIngredient()">+ Add</button>
+      </div>
+      <input type="text" id="food-notes" placeholder="Notes (optional)" style="margin-bottom:8px;background:var(--surface);">
+      <div class="when-row" style="margin-bottom:10px;">
+        <div class="when-label">When</div>
+        <div class="dt-pair">
+          <input type="date" id="food-date" style="background:var(--surface);">
+          <input type="time" id="food-time" style="background:var(--surface);">
+        </div>
+      </div>
+      <button class="btn-primary" style="background:var(--meal-fg);color:#fff;" onclick="logMeal()">Log Meal</button>
+    </div>
+
+    <div class="section-title">Drinks</div>
+    <div class="card">
+      <div class="card-title" style="color:var(--water-fg);display:flex;align-items:center;gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>
+        Log a drink
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input type="text" id="drink-name" placeholder="e.g. Coffee, Green tea, Juice" style="flex:1;">
+        <input type="text" id="drink-amount" placeholder="Amount" style="width:100px;">
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <select id="drink-caffeine" style="flex:1;">
+          <option value="">Caffeine?</option>
+          <option value="none">None</option>
+          <option value="low">Low</option>
+          <option value="high">High</option>
+        </select>
+        <select id="drink-histamine" style="flex:1;">
           <option value="">Histamine?</option>
           <option value="low">Low</option>
           <option value="medium">Medium</option>
           <option value="high">High</option>
         </select>
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:10px;">
-        <input type="text" id="food-notes" placeholder="Notes (optional)" style="flex:1;background:var(--surface);">
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--crash-fg);cursor:pointer;white-space:nowrap;">
-          <input type="checkbox" id="food-trigger" style="width:auto;"> Trigger?
-        </label>
-      </div>
-      <button class="btn-primary" style="background:var(--meal-fg);color:#fff;" onclick="logMeal()">Log Meal</button>
+      <button class="btn-primary" style="background:var(--water-fg);color:#fff;" onclick="logDrink()">Log drink</button>
     </div>
 
     <div class="section-title">Water</div>
@@ -549,6 +639,9 @@
 
     <div class="section-title">Today's Food Log</div>
     <div class="card" style="padding:0 16px;"><div id="food-log-list"></div></div>
+
+    <div class="section-title">Today's Drinks & Water</div>
+    <div class="card" style="padding:0 16px;"><div id="food-screen-water-log"></div></div>
   </div>
 
   <!-- ACTIVITY -->
@@ -560,11 +653,26 @@
         <input type="text" id="act-other-text" placeholder="Describe activity">
       </div>
       <div style="margin-top:14px;">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px;">Duration & Notes</div>
-        <div style="display:flex;gap:8px;">
-          <input type="number" id="act-duration" placeholder="minutes" style="width:100px;">
-          <input type="text" id="act-notes" placeholder="Notes (optional)" style="flex:1;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:10px;">Duration & Time</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+          <span style="font-size:13px;color:var(--text2);">Duration:</span>
+          <span id="act-duration-display" style="font-size:14px;font-weight:600;color:var(--text);">—</span>
         </div>
+        <div class="when-row" style="margin-bottom:10px;">
+          <div class="when-label">Start</div>
+          <div class="dt-pair">
+            <input type="date" id="act-start-date" onchange="calcActDuration()">
+            <input type="time" id="act-start" onchange="calcActDuration()">
+          </div>
+        </div>
+        <div class="when-row" style="margin-bottom:10px;">
+          <div class="when-label">End</div>
+          <div class="dt-pair">
+            <input type="date" id="act-end-date" onchange="calcActDuration()">
+            <input type="time" id="act-end" onchange="calcActDuration()">
+          </div>
+        </div>
+        <input type="text" id="act-notes" placeholder="Notes (optional)">
       </div>
       <div style="margin-top:14px;">
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px;">Exertion level</div>
@@ -578,6 +686,9 @@
 
   <!-- CRASHES -->
   <div id="screen-crash" class="screen">
+    <div class="section-title" style="margin-top:4px;">Last 14 days</div>
+    <div class="card"><div id="crash-chart"></div></div>
+    <div class="section-title">Crash log</div>
     <div id="crash-log-list"></div>
   </div>
 
@@ -585,14 +696,55 @@
   <div id="screen-supps" class="screen">
     <div class="section-title" style="margin-top:4px;">7-Day Adherence</div>
     <div class="card"><div id="supp-streak"></div></div>
-    <div class="section-title">Today's Supplements</div>
+    <div class="section-title">Today's Supplements & Medication</div>
     <div class="card" style="padding:0 16px;"><div id="supp-checklist"></div></div>
-    <div class="section-title">Manage</div>
+    <div class="section-title">Add new</div>
     <div class="card">
-      <input type="text" id="supp-name" placeholder="Supplement name" style="margin-bottom:8px;">
-      <input type="text" id="supp-dose" placeholder="Dose (e.g. 500mg)" style="margin-bottom:10px;">
-      <button class="btn-primary" style="background:var(--supp-fg);color:#fff;" onclick="addSupplement()">Add Supplement</button>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input type="text" id="supp-name" placeholder="Name (e.g. Quercetin, Metoprolol)" style="flex:2;">
+        <input type="text" id="supp-dose" placeholder="Dose" style="flex:1;">
+      </div>
+      <button class="btn-primary" style="background:var(--supp-fg);color:#fff;" onclick="addSupplement()">Add supplement / medication</button>
     </div>
+    <div class="section-title">Today's Log</div>
+    <div class="card" style="padding:0 16px;"><div id="supp-log-list"></div></div>
+  </div>
+
+  <!-- SYMPTOMS -->
+  <div id="screen-symptoms" class="screen">
+    <div class="card">
+      <div class="card-title" style="color:var(--crash-fg);">Log symptom</div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px;">Symptom</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;" id="sym-chip-grid"></div>
+      <input type="text" id="sym-custom" placeholder="Or describe your own..." style="margin-bottom:14px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px;">Type</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button class="theme-btn active" id="sym-type-event" onclick="setSymType('event')">Event (timed)</button>
+        <button class="theme-btn" id="sym-type-allday" onclick="setSymType('allday')">All day</button>
+      </div>
+      <div id="sym-time-fields" style="margin-bottom:14px;">
+        <div class="when-row" style="margin-bottom:8px;">
+          <div class="when-label">Start</div>
+          <div class="dt-pair">
+            <input type="date" id="sym-start-date">
+            <input type="time" id="sym-start">
+          </div>
+        </div>
+        <div class="when-row">
+          <div class="when-label">End</div>
+          <div class="dt-pair">
+            <input type="date" id="sym-end-date">
+            <input type="time" id="sym-end">
+          </div>
+        </div>
+      </div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px;">Severity</div>
+      <div class="sev-row" id="sym-sev-row" style="margin-bottom:14px;"></div>
+      <input type="text" id="sym-notes" placeholder="Notes (optional)" style="margin-bottom:14px;">
+      <button class="btn-primary" style="background:var(--crash-fg);color:#fff;" onclick="logSymptom()">Log symptom</button>
+    </div>
+    <div class="section-title">Today's symptoms</div>
+    <div class="card" style="padding:0 16px;"><div id="symptom-log-list"></div></div>
   </div>
 
   <!-- HISTORY -->
@@ -627,6 +779,15 @@
       <button class="export-btn" onclick="exportAllData()">Export all history (JSON)</button>
     </div>
 
+    <div class="section-title">Activity types</div>
+    <div class="card">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px;">Customise the activity options shown in the activity log.</p>
+      <div id="custom-act-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;"></div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="custom-act-name" placeholder="New activity type" style="flex:1;">
+        <button class="btn-ghost" onclick="addCustomActType()">Add</button>
+      </div>
+    </div>
     <div class="section-title">Danger Zone</div>
     <div class="card">
       <button class="export-btn" style="color:var(--crash-fg);" onclick="clearToday()">Clear today's logs</button>
@@ -653,7 +814,7 @@ const ACT_TYPES = [
 const CRASH_TYPES = ['Throat numbness', 'Brain fog', 'Heavy / Sleep'];
 const CRASH_SYMPTOMS = ['Nausea','Heart racing','Shaking','Sweating','Flushing','Headache','Chest tightness','Blurry vision','Tingling','Anxiety','GI distress','Light sensitivity','Sound sensitivity','Weakness'];
 const MOOD_EMOJIS = ['😞','😕','😐','🙂','😊'];
-const SCREEN_TITLES = {home:'Today',mood:'Mood & Energy',food:'Food & Water',activity:'Activity',crash:'Crashes',supps:'Supplements',history:'History',export:'Settings & Data'};
+const SCREEN_TITLES = {home:'Today',mood:'Mood & Energy',food:'Food & Water',activity:'Activity',crash:'Crashes',supps:'Supplements & Medication',symptoms:'Symptoms',history:'History',export:'Settings & Data'};
 
 // ─── STATE ───────────────────────────────────────────────────────────
 const ld = (k,d) => { try { const v=localStorage.getItem(k); return v?JSON.parse(v):d; } catch { return d; } };
@@ -674,19 +835,26 @@ let S = {
     {id:'s5',name:'Magnesium',dose:'400mg'},
   ]),
   suppTaken:   ld('bsp_supp_taken',  {}), // {suppId: [date, date, ...]} — array of all dates taken
+  suppTakenLog: ld('bsp_supp_taken_log', {}), // {suppId: [{date, ts}, ...]}
   activeCrash: ld('bsp_active_crash',null),
+  drinks:      ld('bsp_drinks',      []),
+  symptoms:    ld('bsp_symptoms',    []),
   mood:        ld('bsp_mood',        {}), // {date: {morning:1-5, afternoon:1-5}}
+  customActTypes: ld('bsp_custom_act_types', []),
+  hiddenActTypes: ld('bsp_hidden_act_types', []),
 };
-
-let timerInterval = null;
-let selActType = null;
-let selExertion = 2;
 
 // ─── UTILS ───────────────────────────────────────────────────────────
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,5);
-const today = () => new Date().toISOString().slice(0,10);
+const today = () => { const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+const localDate = (ts) => { const d=new Date(ts); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+
+let timerInterval = null;
+let viewingDate = today(); // must be after today() definition
+let selActType = null;
+let selExertion = 2;
 const fmt = ts => new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-const fmtDate = d => new Date(d+'T12:00:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
+const fmtDate = d => { const p=d.split('-').map(Number); return new Date(p[0],p[1]-1,p[2]).toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}); };
 const fmtDur = ms => { const s=Math.floor(ms/1000),m=Math.floor(s/60),h=Math.floor(m/60); return h>0?h+'h '+(m%60)+'m':m+'m '+(s%60)+'s'; };
 const todayItems = arr => arr.filter(i=>i.date===today());
 
@@ -694,9 +862,69 @@ function last7Days() {
   const days = [];
   for (let i=6; i>=0; i--) {
     const d = new Date(); d.setDate(d.getDate()-i);
-    days.push(d.toISOString().slice(0,10));
+    days.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));
   }
   return days;
+}
+
+
+// ─── DATETIME HELPERS ────────────────────────────────────────────────
+function toDatetimeLocal(dateStr, timeStr) {
+  // Returns "YYYY-MM-DDTHH:MM" for datetime-local input
+  const d = dateStr || today();
+  const t = timeStr || new Date().toTimeString().slice(0,5);
+  return d + 'T' + t;
+}
+function fromDatetimeLocal(val) {
+  // Returns {date: "YYYY-MM-DD", time: "HH:MM"} or null
+  if (!val) return null;
+  const [date, time] = val.split('T');
+  return {date, time};
+}
+function tsToDatetimeLocal(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  const date = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const time = d.toTimeString().slice(0,5);
+  return date + 'T' + time;
+}
+
+// ─── DATE NAVIGATION ─────────────────────────────────────────────────
+function changeViewDay(delta) {
+  const parts = viewingDate.split('-').map(Number);
+  const d = new Date(parts[0], parts[1]-1, parts[2]);
+  d.setDate(d.getDate() + delta);
+  const newDate = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  // Don't go into the future
+  if (newDate > today()) return;
+  viewingDate = newDate;
+  // Only render home content when home screen is active
+  if (document.getElementById('screen-home').classList.contains('active')) {
+    renderHome();
+  }
+
+}
+
+function updateDateNav(screenName) {
+  const nav = document.getElementById('date-nav');
+  const nextBtn = document.getElementById('nav-next');
+  const titleEl = document.getElementById('screen-title');
+  if (screenName === 'home') {
+    nav.classList.add('visible');
+    const parts = viewingDate.split('-').map(Number);
+    const d = new Date(parts[0], parts[1]-1, parts[2]);
+    const dateStr = d.toLocaleDateString([], {weekday:'short', day:'numeric', month:'short'});
+    if (viewingDate === today()) {
+      titleEl.textContent = 'Today, ' + dateStr;
+    } else {
+      titleEl.textContent = dateStr;
+    }
+    nextBtn.disabled = (viewingDate === today());
+  } else {
+    nav.classList.remove('visible');
+    // Restore screen title for non-home screens
+    titleEl.textContent = SCREEN_TITLES[screenName] || '';
+  }
 }
 
 // ─── NAV ─────────────────────────────────────────────────────────────
@@ -708,8 +936,38 @@ function goTab(name) {
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   const ni = document.getElementById('nav-'+name); if(ni) ni.classList.add('active');
-  document.getElementById('screen-title').textContent = SCREEN_TITLES[name]||'';
-  closeNav(); render();
+  if (name === 'home') viewingDate = today(); // reset to today when navigating to home
+  if (name === 'food') {
+    const now = new Date();
+    const t = today();
+    const timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+    const fd=document.getElementById('food-date'); if(fd&&!fd.value) fd.value=t;
+    const ft=document.getElementById('food-time'); if(ft&&!ft.value) ft.value=timeStr;
+  }
+  if (name === 'symptoms') {
+    const now = new Date();
+    const t = today();
+    const timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+    ['sym-start-date','sym-end-date'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=t;});
+    ['sym-start','sym-end'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=timeStr;});
+  }
+  if (name === 'activity') {
+    const now = new Date();
+    const t = today();
+    const timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+    const sd = document.getElementById('act-start-date');
+    const st = document.getElementById('act-start');
+    const ed = document.getElementById('act-end-date');
+    const et = document.getElementById('act-end');
+    if (sd && !sd.value) sd.value = t;
+    if (st && !st.value) st.value = timeStr;
+    if (ed && !ed.value) ed.value = t;
+    if (et && !et.value) et.value = timeStr;
+    if (typeof calcActDuration === 'function') calcActDuration();
+  }
+  closeNav();
+  updateDateNav(name);
+  render();
 }
 
 // ─── ICON HELPERS ────────────────────────────────────────────────────
@@ -719,38 +977,125 @@ const ICON_CFG = {
   crash:      {bg:'var(--crash-bg)', fg:'var(--crash-fg)', p:'<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>'},
   activity:   {bg:'var(--act-bg)',   fg:'var(--act-fg)',   p:'<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>'},
   supplement: {bg:'var(--supp-bg)',  fg:'var(--supp-fg)',  p:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>'},
+  drink:      {bg:'var(--water-bg)', fg:'var(--water-fg)', p:'<path d="M8 2h8l2 6H6L8 2z"/><path d="M6 8v12a2 2 0 002 2h8a2 2 0 002-2V8"/>'},
+  symptom:    {bg:'var(--crash-bg)', fg:'var(--crash-fg)', p:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'},
 };
 const logIcon = type => {
   const c = ICON_CFG[type]||ICON_CFG.meal;
   return `<div class="log-icon" style="background:${c.bg};color:${c.fg};"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${c.p}</svg></div>`;
 };
 
+// ─── RENDER HOME FOR A SPECIFIC DATE ─────────────────────────────────
+function renderHome() {
+  const d = viewingDate;
+  const isToday = d === today();
+
+  // Update title and date nav
+  updateDateNav('home');
+
+  // Stats for viewed date
+  document.getElementById('stat-water').textContent   = S.water.filter(i=>i.date===d).length;
+  document.getElementById('stat-crashes').textContent = S.crashes.filter(i=>i.date===d).length;
+  document.getElementById('stat-meals').textContent   = S.food.filter(i=>i.date===d).length;
+  document.getElementById('stat-supps').textContent   = S.activities.filter(i=>i.date===d).length;
+
+  // Show/hide crash button — only for today
+  const crashBtn = document.getElementById('crash-btn');
+  const quickGrid = document.querySelector('.quick-grid');
+  if (crashBtn) crashBtn.style.display = isToday ? '' : 'none';
+  if (quickGrid) quickGrid.style.display = isToday ? '' : 'none';
+  const crashTitle = document.querySelector('#screen-home .section-title');
+  if (crashTitle) crashTitle.style.display = isToday ? '' : 'none';
+
+  // Show/hide crash active zone
+  const caz = document.getElementById('crash-active-zone');
+  if (!isToday && caz) caz.innerHTML = '';
+  else if (isToday) renderCrashZone();
+
+  // Mood card — show prompt for today, show logged values for past days
+  const mhc = document.getElementById('mood-home-card');
+  if (isToday) {
+    renderMoodHomeCard();
+  } else {
+    const pastMood = S.mood[d];
+    if (pastMood && (pastMood.morning !== undefined || pastMood.afternoon !== undefined)) {
+      const m = pastMood.morning  > 0 ? MOOD_EMOJIS[pastMood.morning-1]  : pastMood.morning  === 0 ? '—' : '—';
+      const a = pastMood.afternoon > 0 ? MOOD_EMOJIS[pastMood.afternoon-1] : pastMood.afternoon === 0 ? '—' : '—';
+      mhc.innerHTML = `<div class="mood-card" style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:12px;font-weight:600;color:var(--mood-fg);">Mood & Energy</div>
+        <div style="display:flex;gap:16px;align-items:center;">
+          <div style="text-align:center;"><div style="font-size:20px;">${m}</div><div style="font-size:10px;color:var(--text3);font-weight:600;">MORNING</div></div>
+          <div style="text-align:center;"><div style="font-size:20px;">${a}</div><div style="font-size:10px;color:var(--text3);font-weight:600;">AFTERNOON</div></div>
+        </div>
+      </div>`;
+    } else {
+      mhc.innerHTML = '<div class="mood-card" style="font-size:13px;color:var(--text3);">No mood logged this day</div>';
+    }
+  }
+
+  // Render log for viewed date
+  renderRecentLogForDate(d);
+}
+
+function renderRecentLogForDate(d) {
+  const all = [
+    ...S.food.filter(i=>i.date===d).map(i=>({ts:i.ts, id:i.id, label:i.name+(i.ingredients&&i.ingredients.length?' ('+i.ingredients.length+' ingredients)':''), type:'meal'})),
+    ...S.water.filter(i=>i.date===d).map(i=>({ts:i.ts, id:i.id, label:S.settings.bottleML+'ml water', type:'water'})),
+    ...S.crashes.filter(i=>i.date===d).map(i=>({ts:i.startTs, id:i.id, label:(i.types||['Crash']).join(', ')+' · sev '+i.severity+(i.endTs?' · '+fmtDur(i.endTs-i.startTs):''), type:'crash'})),
+    ...S.activities.filter(i=>i.date===d).map(i=>({ts:i.ts, id:i.id, label:i.actType+(i.duration?' · '+i.duration+'m':''), type:'activity'})),
+    ...S.drinks.filter(i=>i.date===d).map(i=>({ts:i.ts, id:i.id, label:i.name+(i.amount?' — '+i.amount:''), type:'drink'})),
+    ...S.symptoms.filter(i=>i.date===d).map(i=>({ts:i.ts, id:i.id, label:i.symptom+(i.allDay?' (all day)':'')+' · sev '+i.severity, type:'symptom'})),
+  ].sort((a,b)=>b.ts-a.ts);
+
+  const label = d===today() ? 'Recent Activity' : new Date(d.split('-').map(Number).reduce((acc,v,i)=>i===0?new Date(v,0,1):acc,(new Date()))).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
+  const titleEl = document.querySelector('#screen-home .section-title:last-of-type');
+  if (titleEl) titleEl.textContent = d === today() ? 'Recent Activity' : new Date(parseInt(d.split('-')[0]),parseInt(d.split('-')[1])-1,parseInt(d.split('-')[2])).toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
+
+  const el = document.getElementById('recent-log');
+  if (!all.length) {
+    el.innerHTML = '<div style="padding:14px 0;font-size:13px;color:var(--text3);">' + (d===today()?'Nothing logged yet today':'Nothing logged this day') + '</div>';
+    return;
+  }
+  el.innerHTML = all.map(i=>`<div class="log-item" style="align-items:center;cursor:pointer;" onclick="openItemDetail('${i.type}','${i.id}')">
+    ${logIcon(i.type)}
+    <div style="flex:1;min-width:0;">
+      <div class="log-time">${fmt(i.ts)}</div>
+      <div class="log-main">${i.label}</div>
+    </div>
+    <svg style="flex-shrink:0;opacity:0.3;margin-left:8px;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </div>`).join('');
+}
+
 // ─── RENDER ──────────────────────────────────────────────────────────
 function render() {
-  document.getElementById('top-date').textContent = new Date().toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
-  document.getElementById('stat-water').textContent   = todayItems(S.water).length;
-  document.getElementById('stat-crashes').textContent = todayItems(S.crashes).length;
-  document.getElementById('stat-meals').textContent   = todayItems(S.food).length;
-  document.getElementById('stat-supps').textContent   = S.supplements.filter(s=>suppTakenOn(s.id,today())).length;
   document.getElementById('bottle-size-display').textContent = S.settings.bottleML;
   document.getElementById('settings-bottle').value       = S.settings.bottleML;
   document.getElementById('settings-water-target').value = S.settings.waterTarget;
   applyTheme(S.settings.theme || 'auto');
   document.getElementById('salt-total').textContent = todayItems(S.salt).reduce((a,i)=>a+(i.mg||0),0);
 
-  renderCrashZone();
-  renderMoodHomeCard();
-  renderRecentLog();
+  // Only render home content when home screen is active
+  if (document.getElementById('screen-home').classList.contains('active')) {
+    renderHome();
+  }
+
   renderWaterBubbles();
   renderFoodLog();
+  renderFoodScreenWaterLog();
   renderCrashLog();
+  renderCrashChart();
   renderActivityLog();
   renderSuppChecklist();
   renderSuppStreak();
+  renderSuppLog();
+  renderSymptomLog();
+  buildSymChipGrid();
+  buildSymSevRow();
   renderMoodScreen();
   renderHistory();
   buildActGrid();
   buildExertionRow();
+  renderCustomActList();
 }
 
 // ─── CRASH ZONE ──────────────────────────────────────────────────────
@@ -784,27 +1129,31 @@ function renderMoodHomeCard() {
   const el = document.getElementById('mood-home-card');
   const tod = S.mood[today()] || {};
   const hour = new Date().getHours();
-  const needMorning   = !tod.morning   && hour >= 6;
-  const needAfternoon = !tod.afternoon && hour >= 14;
+  const needMorning   = tod.morning   === undefined && hour >= 6;
+  const needAfternoon = tod.afternoon === undefined && hour >= 14;
+  const needNight     = tod.night     === undefined && hour >= 20;
 
-  if (!needMorning && !needAfternoon && (tod.morning || tod.afternoon)) {
-    const m = tod.morning   ? MOOD_EMOJIS[tod.morning-1]   : '—';
-    const a = tod.afternoon ? MOOD_EMOJIS[tod.afternoon-1] : '—';
+  if (!needMorning && !needAfternoon && !needNight && (tod.morning !== undefined || tod.afternoon !== undefined || tod.night !== undefined)) {
+    const m = tod.morning   > 0 ? MOOD_EMOJIS[tod.morning-1]   : '—';
+    const a = tod.afternoon > 0 ? MOOD_EMOJIS[tod.afternoon-1] : '—';
+    const n = tod.night     > 0 ? MOOD_EMOJIS[tod.night-1]     : '—';
     el.innerHTML = `<div class="mood-card" style="display:flex;align-items:center;justify-content:space-between;">
       <div style="font-size:12px;font-weight:600;color:var(--mood-fg);">Mood & Energy</div>
-      <div style="display:flex;gap:16px;align-items:center;">
-        <div style="text-align:center;"><div style="font-size:20px;">${m}</div><div style="font-size:10px;color:var(--text3);font-weight:600;">MORNING</div></div>
-        <div style="text-align:center;"><div style="font-size:20px;">${a}</div><div style="font-size:10px;color:var(--text3);font-weight:600;">AFTERNOON</div></div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <div style="text-align:center;"><div style="font-size:18px;">${m}</div><div style="font-size:9px;color:var(--text3);font-weight:600;">AM</div></div>
+        <div style="text-align:center;"><div style="font-size:18px;">${a}</div><div style="font-size:9px;color:var(--text3);font-weight:600;">PM</div></div>
+        <div style="text-align:center;"><div style="font-size:18px;">${n}</div><div style="font-size:9px;color:var(--text3);font-weight:600;">NIGHT</div></div>
       </div>
       <button class="btn-ghost" style="font-size:12px;" onclick="goTab('mood')">Edit</button>
     </div>`;
     return;
   }
-  if (needMorning || needAfternoon) {
-    const label = needMorning && !tod.morning ? 'morning' : 'afternoon';
+  if (needMorning || needAfternoon || needNight) {
+    const label = needMorning ? 'morning' : needAfternoon ? 'afternoon' : 'night';
     el.innerHTML = `<div class="mood-card">
       <div style="font-size:12px;font-weight:700;color:var(--mood-fg);margin-bottom:10px;">How are you feeling this ${label}?</div>
       <div style="display:flex;gap:6px;">${MOOD_EMOJIS.map((e,i)=>`<button class="mood-btn" onclick="logMoodQuick('${label}',${i+1})">${e}</button>`).join('')}</div>
+      <button class="edit-link" style="margin-top:8px;" onclick="skipMood('${label}')">Skip for now</button>
     </div>`;
     return;
   }
@@ -819,12 +1168,18 @@ function renderMoodScreen() {
 
   mEl.innerHTML = `<div class="card"><div class="card-title" style="color:var(--mood-fg);">Morning check-in</div>
     <div style="display:flex;gap:6px;">${MOOD_EMOJIS.map((e,i)=>`<button class="mood-btn ${tod.morning===i+1?'sel':''}" onclick="logMood('morning',${i+1})">${e}</button>`).join('')}</div>
-    ${tod.morning?`<div style="font-size:13px;color:var(--text2);margin-top:8px;">Logged: ${MOOD_EMOJIS[tod.morning-1]} ${tod.morning}/5</div>`:''}
+    ${tod.morning?`<div style="font-size:13px;color:var(--text2);margin-top:8px;">Logged: ${tod.morning>0?MOOD_EMOJIS[tod.morning-1]:'—'} ${tod.morning>0?tod.morning+'/5':'skipped'}</div>`:'<button class="edit-link" onclick="skipMood(\"morning\")">Skip</button>'}
   </div>`;
 
   aEl.innerHTML = `<div class="card"><div class="card-title" style="color:var(--mood-fg);">Afternoon check-in (4pm)</div>
     <div style="display:flex;gap:6px;">${MOOD_EMOJIS.map((e,i)=>`<button class="mood-btn ${tod.afternoon===i+1?'sel':''}" onclick="logMood('afternoon',${i+1})">${e}</button>`).join('')}</div>
-    ${tod.afternoon?`<div style="font-size:13px;color:var(--text2);margin-top:8px;">Logged: ${MOOD_EMOJIS[tod.afternoon-1]} ${tod.afternoon}/5</div>`:''}
+    ${tod.afternoon!==undefined?`<div style="font-size:13px;color:var(--text2);margin-top:8px;">Logged: ${tod.afternoon>0?MOOD_EMOJIS[tod.afternoon-1]:'—'} ${tod.afternoon>0?tod.afternoon+'/5':'skipped'}</div>`:'<button class="edit-link" onclick="skipMood(\"afternoon\")">Skip</button>'}
+  </div>`;
+
+  const nEl = document.getElementById('mood-check-night');
+  if (nEl) nEl.innerHTML = `<div class="card"><div class="card-title" style="color:var(--mood-fg);">Night check-in (9pm)</div>
+    <div style="display:flex;gap:6px;">${MOOD_EMOJIS.map((e,i)=>`<button class="mood-btn ${tod.night===i+1?'sel':''}" onclick="logMood('night',${i+1})">${e}</button>`).join('')}</div>
+    ${tod.night!==undefined?`<div style="font-size:13px;color:var(--text2);margin-top:8px;">Logged: ${tod.night>0?MOOD_EMOJIS[tod.night-1]:'—'} ${tod.night>0?tod.night+'/5':'skipped'}</div>`:'<button class="edit-link" onclick="skipMood(\"night\")">Skip</button>'}
   </div>`;
 
   const days = last7Days();
@@ -838,20 +1193,22 @@ function renderMoodScreen() {
       const h = avg?(avg/5*64+8):4;
       return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">
         <div style="background:var(--mood-fg);opacity:${avg?0.3+avg*0.14:0.1};border-radius:4px 4px 0 0;width:100%;height:${h}px;"></div>
-        <div style="font-size:9px;font-weight:600;color:var(--text3);">${new Date(d+'T12:00:00').toLocaleDateString([],{weekday:'narrow'})}</div>
+        <div style="font-size:9px;font-weight:600;color:var(--text3);">${(()=>{const p=d.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]).toLocaleDateString([],{weekday:'narrow'});})()}</div>
       </div>`;
     }).join('')}
   </div>
   <div style="font-size:11px;color:var(--text3);">Average energy/mood score over 7 days</div>`;
 }
 
-// ─── RECENT LOG ──────────────────────────────────────────────────────
+// ─── RECENT LOG (legacy — home now uses renderRecentLogForDate) ──────
 function renderRecentLog() {
   const all = [
-    ...todayItems(S.food).map(i=>({ts:i.ts, id:i.id, label:i.name+(i.amount?' — '+i.amount:''), type:'meal'})),
+    ...todayItems(S.food).map(i=>({ts:i.ts, id:i.id, label:i.name+(i.ingredients&&i.ingredients.length?' ('+i.ingredients.length+' ingredients)':''), type:'meal'})),
     ...todayItems(S.water).map(i=>({ts:i.ts, id:i.id, label:S.settings.bottleML+'ml water', type:'water'})),
     ...todayItems(S.crashes).map(i=>({ts:i.startTs, id:i.id, label:(i.types||['Crash']).join(', ')+' · sev '+i.severity+(i.endTs?' · '+fmtDur(i.endTs-i.startTs):''), type:'crash'})),
     ...todayItems(S.activities).map(i=>({ts:i.ts, id:i.id, label:i.actType+(i.duration?' · '+i.duration+'m':''), type:'activity'})),
+    ...todayItems(S.drinks).map(i=>({ts:i.ts, id:i.id, label:i.name+(i.amount?' — '+i.amount:''), type:'drink'})),
+    ...todayItems(S.symptoms).map(i=>({ts:i.ts, id:i.id, label:i.symptom+(i.allDay?' (all day)':'')+' · sev '+i.severity, type:'symptom'})),
   ].sort((a,b)=>b.ts-a.ts).slice(0,20);
 
   const el = document.getElementById('recent-log');
@@ -874,16 +1231,27 @@ function openItemDetail(type, id) {
   if (type === 'meal') {
     const item = S.food.find(i=>i.id===id);
     if (!item) return;
-    title = item.name + (item.amount ? ' — ' + item.amount : '');
-    subtitle = [item.histamine ? 'Histamine: ' + item.histamine : '', item.notes].filter(Boolean).join(' · ');
+    title = item.name;
+    const ingStr = (item.ingredients&&item.ingredients.length) ? item.ingredients.map(i=>i.name+(i.amount?' ('+i.amount+')':'')).join(', ') : '';
+    subtitle = [ingStr, item.histamine?'Histamine: '+item.histamine:'', item.notes].filter(Boolean).join(' · ');
   } else if (type === 'water') {
     title = S.settings.bottleML + 'ml water';
     subtitle = 'Tap remove to delete this entry';
+  } else if (type === 'drink') {
+    const item = S.drinks.find(i=>i.id===id);
+    if (!item) return;
+    title = item.name + (item.amount ? ' — ' + item.amount : '');
+    subtitle = [item.caffeine?'Caffeine: '+item.caffeine:'', item.histamine?'Histamine: '+item.histamine:''].filter(Boolean).join(' · ');
   } else if (type === 'crash') {
     const item = S.crashes.find(i=>i.id===id);
     if (!item) return;
     title = (item.types||['Crash']).join(', ');
     subtitle = 'Severity ' + item.severity + '/5' + (item.duration ? ' · ' + fmtDur(item.duration) : '');
+  } else if (type === 'symptom') {
+    const item = S.symptoms.find(i=>i.id===id);
+    if (!item) return;
+    title = item.symptom;
+    subtitle = (item.allDay?'All day':fmt(item.ts)) + ' · Severity ' + item.severity + '/5' + (item.notes?' · '+item.notes:'');
   } else if (type === 'activity') {
     const item = S.activities.find(i=>i.id===id);
     if (!item) return;
@@ -910,11 +1278,14 @@ function openItemDetail(type, id) {
     </div>`;
 
   if (type !== 'water') {
-    inner.querySelector('#detail-edit').onclick = () => {
+    const editBtn = inner.querySelector('#detail-edit');
+    if (editBtn) editBtn.onclick = () => {
       modal.remove();
       if (type === 'meal')     editMeal(id);
       if (type === 'crash')    showCrashModal(id);
       if (type === 'activity') editActivity(id);
+      if (type === 'drink')    editDrink(id);
+      if (type === 'symptom')  editSymptom(id);
     };
   }
 
@@ -932,6 +1303,8 @@ function deleteItem(type, id) {
   if (type === 'water')    { S.water      = S.water.filter(i=>i.id!==id);      sv('bsp_water',S.water); }
   if (type === 'crash')    { S.crashes    = S.crashes.filter(i=>i.id!==id);    sv('bsp_crashes',S.crashes); }
   if (type === 'activity') { S.activities = S.activities.filter(i=>i.id!==id); sv('bsp_activities',S.activities); }
+  if (type === 'drink')    { S.drinks     = S.drinks.filter(i=>i.id!==id);     sv('bsp_drinks',S.drinks); }
+  if (type === 'symptom')  { S.symptoms   = S.symptoms.filter(i=>i.id!==id);   sv('bsp_symptoms',S.symptoms); }
   render();
 }
 
@@ -948,9 +1321,23 @@ function editActivity(id) {
     <div class="modal-title">Edit activity</div>
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px;">Activity type</div>
     <div class="act-grid" id="ea-grid" style="margin-bottom:14px;">${actGridHtml}</div>
-    <div style="display:flex;gap:8px;margin-bottom:14px;">
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
       <input type="number" id="ea-duration" value="${item.duration||''}" placeholder="minutes" style="width:100px;">
       <input type="text" id="ea-notes" value="${item.notes||''}" placeholder="Notes" style="flex:1;">
+    </div>
+    <div class="when-row">
+      <div class="when-label">Start</div>
+      <div class="dt-pair">
+        <input type="date" id="ea-date" value="${item.date||today()}">
+        <input type="time" id="ea-start-t" value="${(item.startTs||item.ts)?new Date(item.startTs||item.ts).toTimeString().slice(0,5):''}">
+      </div>
+    </div>
+    <div class="when-row">
+      <div class="when-label">End</div>
+      <div class="dt-pair">
+        <input type="date" id="ea-end-date" value="${item.date||today()}">
+        <input type="time" id="ea-end-t" value="${item.endTs?new Date(item.endTs).toTimeString().slice(0,5):''}">
+      </div>
     </div>
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px;">Exertion level</div>
     <div class="sev-row" id="ea-sev-row" style="margin-bottom:16px;"></div>
@@ -984,12 +1371,20 @@ function editActivity(id) {
 
   inner.querySelector('#ea-save').onclick = () => {
     const dur = inner.querySelector('#ea-duration').value;
+    const newDate = inner.querySelector('#ea-date').value || item.date;
+    const newTs = timeToTs(inner.querySelector('#ea-start-t').value, newDate) || item.ts;
+    const eaEndDate = (inner.querySelector('#ea-end-date') && inner.querySelector('#ea-end-date').value) ? inner.querySelector('#ea-end-date').value : newDate;
+    const newEndTs = timeToTs(inner.querySelector('#ea-end-t') ? inner.querySelector('#ea-end-t').value : '', eaEndDate) || item.endTs;
     S.activities = S.activities.map(a => a.id===id ? {
       ...a,
       actType: eaSelType,
       duration: dur ? parseInt(dur) : null,
       exertion: eaSelSev,
       notes: inner.querySelector('#ea-notes').value.trim(),
+      date: newDate,
+      ts: newTs||a.ts,
+      startTs: newTs||a.startTs,
+      endTs: newEndTs||a.endTs,
     } : a);
     sv('bsp_activities', S.activities);
     modal.remove(); render();
@@ -1012,12 +1407,55 @@ function renderWaterBubbles() {
 }
 function removeWater(id) { S.water=S.water.filter(w=>w.id!==id); sv('bsp_water',S.water); render(); }
 
+function renderFoodScreenWaterLog() {
+  const el = document.getElementById('food-screen-water-log'); if(!el) return;
+  const allWater = todayItems(S.water);
+  const allDrinks = todayItems(S.drinks);
+  const all = [
+    ...allWater.map(i=>({ts:i.ts, id:i.id, label:S.settings.bottleML+'ml water', type:'water'})),
+    ...allDrinks.map(i=>({ts:i.ts, id:i.id, label:i.name+(i.amount?' — '+i.amount:'')+(i.caffeine?' · '+i.caffeine+' caffeine':''), type:'drink'})),
+  ].sort((a,b)=>b.ts-a.ts);
+  if(!all.length){el.innerHTML='<div style="padding:14px 0;font-size:13px;color:var(--text3);">Nothing logged yet</div>';return;}
+  el.innerHTML=all.map(i=>`<div class="log-item" style="align-items:center;cursor:pointer;" onclick="openItemDetail('${i.type}','${i.id}')">
+    ${logIcon(i.type)}
+    <div style="flex:1;min-width:0;"><div class="log-time">${fmt(i.ts)}</div><div class="log-main">${i.label}</div></div>
+    <svg style="flex-shrink:0;opacity:0.3;margin-left:8px;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </div>`).join('');
+}
+
 // ─── FOOD LOG ────────────────────────────────────────────────────────
 function renderFoodLog() {
   const items = todayItems(S.food).slice().reverse();
   const el = document.getElementById('food-log-list');
   if (!items.length) { el.innerHTML='<div style="padding:14px 0;font-size:13px;color:var(--text3);">Nothing logged yet</div>'; return; }
-  el.innerHTML = items.map(i=>`<div class="log-item">${logIcon('meal')}<div style="flex:1;"><div class="log-time">${fmt(i.ts)}</div><div class="log-main">${i.name}${i.amount?' — '+i.amount:''}</div>${i.histamine?`<div class="log-sub">Histamine: ${i.histamine}</div>`:''}${i.suspectedTrigger?'<span class="tag" style="background:var(--crash-bg);color:var(--crash-fg);margin-top:4px;display:inline-flex;">⚠ Trigger</span>':''}${i.notes?`<div class="log-sub">${i.notes}</div>`:''}<button class="edit-link" onclick="editMeal('${i.id}')">Edit</button></div></div>`).join('');
+  el.innerHTML = items.map(i=>`<div class="log-item">${logIcon('meal')}<div style="flex:1;"><div class="log-time">${fmt(i.ts)}</div><div class="log-main">${i.name}</div>${(i.ingredients&&i.ingredients.length)?`<div class="log-sub">${i.ingredients.map(ing=>ing.name+(ing.amount?' ('+ing.amount+')':'')).join(', ')}</div>`:''}${i.histamine?`<div class="log-sub">Histamine: ${i.histamine}</div>`:''}${i.suspectedTrigger?'<span class="tag" style="background:var(--crash-bg);color:var(--crash-fg);margin-top:4px;display:inline-flex;">⚠ Trigger</span>':''}${i.notes?`<div class="log-sub">${i.notes}</div>`:''}<button class="edit-link" onclick="editMeal('${i.id}')">Edit</button></div></div>`).join('');
+}
+
+function renderCrashChart() {
+  const el = document.getElementById('crash-chart'); if(!el) return;
+  const days = [];
+  for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');days.push(ds);}
+  const maxCrashes = Math.max(1,...days.map(d=>S.crashes.filter(c=>c.date===d).length));
+  el.innerHTML=`<div style="display:flex;gap:3px;align-items:flex-end;height:64px;margin-bottom:6px;">
+    ${days.map(d=>{
+      const crashes = S.crashes.filter(c=>c.date===d);
+      const count = crashes.length;
+      const avgSev = count ? Math.round(crashes.reduce((s,c)=>s+(c.severity||3),0)/count*10)/10 : 0;
+      const h = count ? Math.max(8, Math.round(count/maxCrashes*56)) : 3;
+      const isToday = d===today();
+      const label = (()=>{const p=d.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]).toLocaleDateString([],{day:'numeric'});})();
+      const color = count===0?'var(--border)':avgSev>=4?'var(--crash-fg)':avgSev>=2?'#f0a070':'var(--supp-fg)';
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;" title="${d}: ${count} crash${count!==1?'es':''}${avgSev?' avg sev '+avgSev:''}">
+        <div style="background:${color};border-radius:3px 3px 0 0;width:100%;height:${h}px;transition:height 0.2s;${isToday?'outline:1.5px solid var(--crash-fg);outline-offset:1px;':''}"></div>
+        <div style="font-size:8px;font-weight:600;color:${isToday?'var(--crash-fg)':'var(--text3)'};">${label}</div>
+      </div>`;
+    }).join('')}
+  </div>
+  <div style="display:flex;gap:12px;font-size:11px;color:var(--text3);">
+    <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--supp-fg);display:inline-block;"></span>Low</span>
+    <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:#f0a070;display:inline-block;"></span>Med</span>
+    <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:var(--crash-fg);display:inline-block;"></span>High sev</span>
+  </div>`;
 }
 
 // ─── CRASH LOG ───────────────────────────────────────────────────────
@@ -1037,6 +1475,7 @@ function renderCrashLog() {
       </div>
     </div>
     ${i.duration?`<div style="font-size:12px;color:var(--text2);margin-bottom:6px;">Duration: ${fmtDur(i.duration)}</div>`:''}
+    ${i.iceUsed?'<span class="tag" style="background:var(--water-bg);color:var(--water-fg);margin-bottom:6px;display:inline-flex;">🧊 Ice used</span>':''}
     ${i.preActivity?`<div style="font-size:12px;color:var(--text2);margin-bottom:6px;">Before crash: ${i.preActivity}</div>`:''}
     ${(i.symptoms&&i.symptoms.length)?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">${i.symptoms.map(s=>`<span class="tag" style="background:var(--crash-bg);color:var(--crash-fg);">${s}</span>`).join('')}</div>`:''}
     ${i.notes?`<div style="font-size:13px;color:var(--text2);">${i.notes}</div>`:''}
@@ -1054,16 +1493,56 @@ function renderActivityLog() {
 // ─── SUPPLEMENTS ─────────────────────────────────────────────────────
 function renderSuppChecklist() {
   const el = document.getElementById('supp-checklist');
-  if (!S.supplements.length) { el.innerHTML='<div style="padding:14px 0;font-size:13px;color:var(--text3);">Add supplements below</div>'; return; }
+  if (!S.supplements.length) {
+    el.innerHTML='<div style="padding:14px 0;font-size:13px;color:var(--text3);">No supplements added yet. Add one below.</div>';
+    return;
+  }
   el.innerHTML = S.supplements.map(s=>{
     const done = suppTakenOn(s.id, today());
-    return `<div class="supp-row">
-      <div><div style="font-size:14px;font-weight:500;">${s.name}</div><div style="font-size:12px;color:var(--text2);">${s.dose}</div></div>
-      <div class="check-circle ${done?'done':''}" onclick="toggleSupp('${s.id}')">
+    const ts = suppTakenTs(s.id, today());
+    return `<div class="supp-row" style="cursor:pointer;" onclick="openSuppDetail('${s.id}')">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:500;">${s.name}</div>
+        <div style="font-size:12px;color:var(--text2);">${s.dose}${done&&ts?' · taken '+fmt(ts):''}</div>
+      </div>
+      <div class="check-circle ${done?'done':''}" onclick="event.stopPropagation();toggleSupp('${s.id}')">
         ${done?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}
       </div>
     </div>`;
   }).join('');
+}
+
+function openSuppDetail(id) {
+  const s = S.supplements.find(x=>x.id===id); if(!s) return;
+  const done = suppTakenOn(s.id, today());
+  const existing = document.getElementById('supp-detail-modal'); if(existing) existing.remove();
+  const modal = document.createElement('div'); modal.id='supp-detail-modal'; modal.className='modal-bg';
+  modal.onclick = e => { if(e.target===modal) modal.remove(); };
+  const inner = document.createElement('div'); inner.className='modal-sheet';
+  inner.innerHTML = `
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <div class="log-icon" style="background:var(--supp-bg);color:var(--supp-fg);">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      </div>
+      <div>
+        <div style="font-size:17px;font-weight:700;">${s.name}</div>
+        <div style="font-size:13px;color:var(--text2);">${s.dose}</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn-primary" style="background:${done?'var(--surface2)':'var(--supp-fg)'};color:${done?'var(--text)':'#fff'};" id="sd-toggle">
+        ${done?'Mark as not taken':'Mark as taken'}
+      </button>
+      <button class="btn-primary" style="background:var(--surface2);color:var(--text);" id="sd-edit">Edit</button>
+      <button class="btn-primary" style="background:var(--crash-bg);color:var(--crash-fg);" id="sd-remove">Remove</button>
+      <button class="btn-ghost" id="sd-cancel">Cancel</button>
+    </div>`;
+  inner.querySelector('#sd-toggle').onclick = () => { modal.remove(); toggleSupp(id); };
+  inner.querySelector('#sd-edit').onclick   = () => { modal.remove(); editSuppDef(id); };
+  inner.querySelector('#sd-remove').onclick = () => { modal.remove(); deleteSuppDef(id); };
+  inner.querySelector('#sd-cancel').onclick = () => modal.remove();
+  modal.appendChild(inner); document.body.appendChild(modal);
 }
 
 function renderSuppStreak() {
@@ -1077,7 +1556,7 @@ function renderSuppStreak() {
     const pct = Math.round(taken/target*100);
     const hit = pct===100;
     const isToday = d===today();
-    const label = new Date(d+'T12:00:00').toLocaleDateString([],{weekday:'narrow'});
+    const label = (d => { const p=d.split('-').map(Number); return new Date(p[0],p[1]-1,p[2]).toLocaleDateString([],{weekday:'narrow'}); })(d);
     return `<div class="streak-day">
       <div class="streak-dot ${hit?'hit':'miss'} ${isToday?'today':''}" title="${pct}%">${hit?'✓':pct+'%'}</div>
       <div class="streak-label">${label}</div>
@@ -1088,7 +1567,7 @@ function renderSuppStreak() {
     const count = S.water.filter(w=>w.date===d).length;
     const hit = count >= (S.settings.waterTarget||8);
     const isToday = d===today();
-    const label = new Date(d+'T12:00:00').toLocaleDateString([],{weekday:'narrow'});
+    const label = (d => { const p=d.split('-').map(Number); return new Date(p[0],p[1]-1,p[2]).toLocaleDateString([],{weekday:'narrow'}); })(d);
     return `<div class="streak-day">
       <div class="streak-dot ${hit?'hit':'miss'} ${isToday?'today':''}" style="${hit?'':'background:var(--water-bg);color:var(--water-fg);border-color:var(--water-fg)'};" title="${count} bottles">${count}</div>
       <div class="streak-label">${label}</div>
@@ -1116,6 +1595,8 @@ function renderHistory() {
     ...S.crashes.map(i=>i.date),
     ...S.activities.map(i=>i.date),
     ...Object.keys(S.mood),
+    ...S.drinks.map(i=>i.date),
+    ...S.symptoms.map(i=>i.date),
   ]);
   const allDates = [...daySet].filter(Boolean).sort().reverse();
 
@@ -1129,11 +1610,15 @@ function renderHistory() {
     const dayAct      = S.activities.filter(i=>i.date===d);
     const dayMood     = S.mood[d];
 
+    const dayDrinks  = S.drinks.filter(i=>i.date===d);
+    const daySymptoms = S.symptoms.filter(i=>i.date===d);
     const items = [
-      ...dayFood.map(i=>({ts:i.ts, label:i.name+(i.amount?' — '+i.amount:''), type:'meal'})),
-      ...dayWater.map(i=>({ts:i.ts, label:S.settings.bottleML+'ml water', type:'water'})),
-      ...dayCrashes.map(i=>({ts:i.startTs, label:(i.types||['Crash']).join(', ')+' sev '+i.severity, type:'crash'})),
-      ...dayAct.map(i=>({ts:i.ts, label:i.actType+(i.duration?' · '+i.duration+'m':''), type:'activity'})),
+      ...dayFood.map(i=>({ts:i.ts, id:i.id, label:i.name+(i.ingredients&&i.ingredients.length?' ('+i.ingredients.length+' ingredients)':''), type:'meal'})),
+      ...dayWater.map(i=>({ts:i.ts, id:i.id, label:S.settings.bottleML+'ml water', type:'water'})),
+      ...dayCrashes.map(i=>({ts:i.startTs, id:i.id, label:(i.types||['Crash']).join(', ')+' · sev '+i.severity, type:'crash'})),
+      ...dayAct.map(i=>({ts:i.ts, id:i.id, label:i.actType+(i.duration?' · '+i.duration+'m':''), type:'activity'})),
+      ...dayDrinks.map(i=>({ts:i.ts, id:i.id, label:i.name+(i.amount?' — '+i.amount:''), type:'drink'})),
+      ...daySymptoms.map(i=>({ts:i.ts, id:i.id, label:i.symptom+(i.allDay?' (all day)':''), type:'symptom'})),
     ].sort((a,b)=>a.ts-b.ts);
 
     const suppTaken = S.supplements.filter(s=>suppTakenOn(s.id,d)).length;
@@ -1144,7 +1629,7 @@ function renderHistory() {
     return `<div class="history-day">
       <div class="history-day-header">${fmtDate(d)}${moodStr} · ${dayWater.length} bottles${suppStr} · ${dayCrashes.length} crash${dayCrashes.length!==1?'es':''}</div>
       <div class="card" style="padding:0 16px;">
-        ${items.length?items.map(i=>`<div class="log-item">${logIcon(i.type)}<div style="flex:1;min-width:0;"><div class="log-time">${fmt(i.ts)}</div><div class="log-main">${i.label}</div></div></div>`).join(''):'<div style="padding:12px 0;font-size:13px;color:var(--text3);">No entries</div>'}
+        ${items.length?items.map(i=>`<div class="log-item" style="align-items:center;cursor:pointer;" onclick="openItemDetail('${i.type}','${i.id}')">${logIcon(i.type)}<div style="flex:1;min-width:0;"><div class="log-time">${fmt(i.ts)}</div><div class="log-main">${i.label}</div></div><svg style="flex-shrink:0;opacity:0.3;margin-left:8px;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>`).join(''):'<div style="padding:12px 0;font-size:13px;color:var(--text3);">No entries</div>'}
       </div>
     </div>`;
   }).join('');
@@ -1153,7 +1638,9 @@ function renderHistory() {
 // ─── ACTIVITY GRID ───────────────────────────────────────────────────
 function buildActGrid() {
   const el = document.getElementById('act-grid');
-  el.innerHTML = ACT_TYPES.map(a=>`<button class="act-btn ${selActType===a.label?'sel':''}" onclick="selectAct(this,'${a.label}')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${a.icon}</svg>${a.label}</button>`).join('');
+  const hiddenSet = new Set(S.hiddenActTypes||[]);
+  const allActTypes = [...ACT_TYPES.filter(a=>!hiddenSet.has(a.label)), ...S.customActTypes];
+  el.innerHTML = allActTypes.map(a=>`<button class="act-btn ${selActType===a.label?'sel':''}" onclick="selectAct(this,'${a.label}')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${a.icon}</svg>${a.label}</button>`).join('');
 }
 
 function buildExertionRow() {
@@ -1185,6 +1672,7 @@ function showCrashModal(editId) {
   let selSymptoms = editing ? [...(editing.symptoms||[])]     : [];
   let preActivity = editing ? (editing.preActivity||'')       : '';
   let notes       = editing ? (editing.notes||'')             : '';
+  let iceUsed     = editing ? (editing.iceUsed||false)        : false;
 
   function rebuild() {
     inner.innerHTML = `
@@ -1209,6 +1697,31 @@ function showCrashModal(editId) {
         ${CRASH_SYMPTOMS.map(s=>`<button class="chip ${selSymptoms.includes(s)?'sel':''}" data-sym="${s}">${s}</button>`).join('')}
       </div>
 
+      ${editId ? `
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px;">Timing</div>
+      <div class="when-row">
+        <div class="when-label">Start</div>
+        <div class="dt-pair">
+          <input type="date" id="crash-date" value="${editing && editing.date ? editing.date : today()}">
+          <input type="time" id="crash-start-time" value="${editing && editing.startTs ? new Date(editing.startTs).toTimeString().slice(0,5) : ''}">
+        </div>
+      </div>
+      <div class="when-row" style="margin-bottom:16px;">
+        <div class="when-label">End</div>
+        <div class="dt-pair">
+          <input type="date" id="crash-end-date" value="${editing && editing.date ? editing.date : today()}">
+          <input type="time" id="crash-end-time" value="${editing && editing.endTs ? new Date(editing.endTs).toTimeString().slice(0,5) : ''}">
+        </div>
+      </div>` : ''}
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;margin-bottom:14px;border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border);">
+        <div>
+          <div style="font-size:14px;font-weight:500;">Ice used</div>
+          <div style="font-size:12px;color:var(--text3);">Ice pack / cold compress applied</div>
+        </div>
+        <button id="ice-toggle-btn" onclick="iceUsed=!iceUsed;rebuild();" style="width:44px;height:26px;border-radius:13px;border:none;cursor:pointer;transition:background 0.15s;background:${iceUsed?'var(--water-fg)':'var(--border-med)'};position:relative;">
+          <span style="position:absolute;top:3px;left:${iceUsed?'21px':'3px'};width:20px;height:20px;border-radius:50%;background:#fff;transition:left 0.15s;display:block;"></span>
+        </button>
+      </div>
       <textarea id="crash-notes-input" placeholder="Notes (optional)" style="width:100%;height:64px;resize:none;margin-bottom:14px;">${notes}</textarea>
 
       <div style="display:flex;gap:10px;">
@@ -1244,11 +1757,21 @@ function showCrashModal(editId) {
       if (!selTypes.length) { showToast('Select at least one crash type'); return; }
       preActivity = inner.querySelector('#crash-pre').value;
       notes       = inner.querySelector('#crash-notes-input').value;
+      iceUsed = iceUsed; // captured in closure
       if (editId) {
-        S.crashes = S.crashes.map(c=>c.id===editId?{...c,types:selTypes,severity:selSev,symptoms:selSymptoms,preActivity,notes}:c);
+        const crashDateEl  = inner.querySelector('#crash-date');
+        const crashStartEl = inner.querySelector('#crash-start-time');
+        const crashEndDateEl = inner.querySelector('#crash-end-date');
+        const crashEndEl   = inner.querySelector('#crash-end-time');
+        const newDate    = (crashDateEl && crashDateEl.value) ? crashDateEl.value : (editing ? editing.date : today());
+        const newStartTs = (crashStartEl && crashStartEl.value) ? timeToTs(crashStartEl.value, newDate) : (editing ? editing.startTs : null);
+        const crashEndDate = (crashEndDateEl && crashEndDateEl.value) ? crashEndDateEl.value : newDate;
+        const newEndTs   = (crashEndEl && crashEndEl.value)   ? timeToTs(crashEndEl.value, crashEndDate) : (editing ? editing.endTs : null);
+        const newDur = (newEndTs && newStartTs) ? newEndTs - newStartTs : editing ? editing.duration : null;
+        S.crashes = S.crashes.map(c=>c.id===editId?{...c,types:selTypes,severity:selSev,symptoms:selSymptoms,preActivity,notes,iceUsed,date:newDate,startTs:newStartTs,endTs:newEndTs,duration:newDur}:c);
         sv('bsp_crashes',S.crashes);
       } else {
-        S.activeCrash = {id:uid(),types:selTypes,severity:selSev,symptoms:selSymptoms,preActivity,notes,startTs:Date.now()};
+        S.activeCrash = {id:uid(),types:selTypes,severity:selSev,symptoms:selSymptoms,preActivity,notes,iceUsed,startTs:Date.now()};
         sv('bsp_active_crash',S.activeCrash);
       }
       modal.remove(); render();
@@ -1266,25 +1789,57 @@ function editMeal(id) {
   const item = S.food.find(f=>f.id===id); if(!item)return;
   const modal=document.createElement('div'); modal.id='edit-modal'; modal.className='modal-bg';
   const inner=document.createElement('div'); inner.className='modal-sheet';
+  let editIngredients = [...(item.ingredients||[])];
+
+  function rebuildEditIngredients() {
+    const el = inner.querySelector('#em-ing-list');
+    if (!el) return;
+    window._editIngredients = editIngredients;
+    window._rebuildEditIngredients = rebuildEditIngredients;
+    el.innerHTML = editIngredients.map((ing,i)=>`
+      <div style="display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:var(--rs);padding:7px 10px;">
+        <span style="flex:1;font-size:13px;">${ing.name}${ing.amount?' — '+ing.amount:''}</span>
+        <button onclick="window._editIngredients.splice(${i},1);window._rebuildEditIngredients();" style="border:none;background:none;color:var(--text3);cursor:pointer;font-size:16px;line-height:1;padding:0;">×</button>
+      </div>`).join('');
+  }
+
   inner.innerHTML=`<div class="modal-handle"></div><div class="modal-title">Edit meal</div>
     <input type="text" id="em-name" value="${item.name}" style="margin-bottom:8px;">
-    <div style="display:flex;gap:8px;margin-bottom:8px;">
-      <input type="text" id="em-amount" value="${item.amount||''}" placeholder="Amount" style="flex:1;">
-      <select id="em-hist" style="width:130px;">
-        <option value="">Histamine?</option>
-        <option value="low" ${item.histamine==='low'?'selected':''}>Low</option>
-        <option value="medium" ${item.histamine==='medium'?'selected':''}>Medium</option>
-        <option value="high" ${item.histamine==='high'?'selected':''}>High</option>
-      </select>
+    <select id="em-hist" style="width:100%;margin-bottom:8px;">
+      <option value="">Overall histamine?</option>
+      <option value="low" ${item.histamine==='low'?'selected':''}>Low</option>
+      <option value="medium" ${item.histamine==='medium'?'selected':''}>Medium</option>
+      <option value="high" ${item.histamine==='high'?'selected':''}>High</option>
+    </select>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--meal-fg);margin-bottom:6px;">Ingredients</div>
+    <div id="em-ing-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;">
+      <input type="text" id="em-ing-name" placeholder="Ingredient" style="flex:2;">
+      <input type="text" id="em-ing-amt" placeholder="Amount" style="flex:1;">
+      <button class="btn-ghost" style="padding:8px 10px;white-space:nowrap;" onclick="
+        const n=inner.querySelector('#em-ing-name').value.trim();
+        if(n){window._editIngredients.push({name:n,amount:inner.querySelector('#em-ing-amt').value.trim()});
+        inner.querySelector('#em-ing-name').value='';inner.querySelector('#em-ing-amt').value='';
+        window._rebuildEditIngredients();}">+ Add</button>
     </div>
-    <input type="text" id="em-notes" value="${item.notes||''}" placeholder="Notes" style="margin-bottom:14px;">
+    <input type="text" id="em-notes" value="${item.notes||''}" placeholder="Notes" style="margin-bottom:8px;">
+    <div class="when-row">
+      <div class="when-label">When</div>
+      <div class="dt-pair">
+        <input type="date" id="em-date" value="${item.date||today()}">
+        <input type="time" id="em-time" value="${item.ts?new Date(item.ts).toTimeString().slice(0,5):''}">
+      </div>
+    </div>
     <div style="display:flex;gap:10px;">
       <button class="btn-ghost" style="flex:1;" onclick="document.getElementById('edit-modal').remove()">Cancel</button>
       <button class="btn-primary" style="flex:2;background:var(--meal-fg);color:#fff;" id="em-save">Save</button>
     </div>`;
+  rebuildEditIngredients();
   inner.querySelector('#em-save').onclick=()=>{
     const n=inner.querySelector('#em-name').value.trim(); if(!n)return;
-    S.food=S.food.map(f=>f.id===id?{...f,name:n,amount:inner.querySelector('#em-amount').value,histamine:inner.querySelector('#em-hist').value,notes:inner.querySelector('#em-notes').value}:f);
+    const newDate = inner.querySelector('#em-date').value || item.date;
+    const newTs = timeToTs(inner.querySelector('#em-time').value, newDate) || item.ts;
+    S.food=S.food.map(f=>f.id===id?{...f,name:n,ingredients:editIngredients,histamine:inner.querySelector('#em-hist')?inner.querySelector('#em-hist').value:f.histamine,notes:inner.querySelector('#em-notes').value,date:newDate,ts:newTs||f.ts}:f);
     sv('bsp_food',S.food); modal.remove(); render();
   };
   modal.appendChild(inner); document.body.appendChild(modal);
@@ -1311,13 +1866,53 @@ function logMood(period, val) {
   render(); showToast('Mood logged');
 }
 
+let pendingIngredients = [];
+
+function addIngredient() {
+  const name = document.getElementById('ingredient-name').value.trim();
+  if (!name) return;
+  const amount = document.getElementById('ingredient-amount').value.trim();
+  pendingIngredients.push({name, amount});
+  document.getElementById('ingredient-name').value = '';
+  document.getElementById('ingredient-amount').value = '';
+  renderIngredientList();
+}
+
+function removeIngredient(idx) {
+  pendingIngredients.splice(idx, 1);
+  renderIngredientList();
+}
+
+function renderIngredientList() {
+  const el = document.getElementById('ingredient-list');
+  if (!el) return;
+  if (!pendingIngredients.length) { el.innerHTML = ''; return; }
+  el.innerHTML = pendingIngredients.map((ing, i) => `
+    <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:7px 10px;">
+      <span style="flex:1;font-size:13px;">${ing.name}${ing.amount?' — '+ing.amount:''}</span>
+      <button onclick="removeIngredient(${i})" style="border:none;background:none;color:var(--text3);cursor:pointer;font-size:16px;line-height:1;padding:0;">×</button>
+    </div>`).join('');
+}
+
 function logMeal() {
   const name=document.getElementById('food-name').value.trim();
-  if(!name){showToast('Enter what you ate');return;}
-  S.food.push({id:uid(),ts:Date.now(),date:today(),name,amount:document.getElementById('food-amount').value.trim(),histamine:document.getElementById('food-histamine').value,suspectedTrigger:document.getElementById('food-trigger').checked,notes:document.getElementById('food-notes').value.trim()});
+  if(!name){showToast('Enter a meal name');return;}
+  const foodDate = document.getElementById('food-date').value || today();
+  const foodTime = document.getElementById('food-time').value;
+  const foodTs   = foodTime ? timeToTs(foodTime, foodDate) : Date.now();
+  S.food.push({
+    id:uid(), ts:foodTs||Date.now(), date:foodDate, name,
+    ingredients: [...pendingIngredients],
+    histamine:document.getElementById('food-histamine').value,
+    suspectedTrigger:document.getElementById('food-trigger').checked,
+    notes:document.getElementById('food-notes').value.trim()
+  });
   sv('bsp_food',S.food);
-  ['food-name','food-amount','food-notes'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('food-histamine').value=''; document.getElementById('food-trigger').checked=false;
+  ['food-name','food-notes','ingredient-name','ingredient-amount','food-date','food-time'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); 
+  document.getElementById('food-histamine').value='';
+  document.getElementById('food-trigger').checked=false;
+  pendingIngredients=[];
+  renderIngredientList();
   render(); showToast('Meal logged');
 }
 
@@ -1332,27 +1927,77 @@ function logSalt() {
   sv('bsp_salt',S.salt); document.getElementById('salt-input').value=''; render();
 }
 
+
+function calcActDuration() {
+  const startDate = (document.getElementById('act-start-date')||{}).value;
+  const startTime = (document.getElementById('act-start')||{}).value;
+  const endDate   = (document.getElementById('act-end-date')||{}).value;
+  const endTime   = (document.getElementById('act-end')||{}).value;
+  const disp = document.getElementById('act-duration-display');
+  if (!disp) return;
+  if (!startTime || !endTime) { disp.textContent = '—'; return; }
+  const sTs = timeToTs(startTime, startDate || today());
+  const eTs = timeToTs(endTime,   endDate   || today());
+  if (!sTs || !eTs || eTs <= sTs) { disp.textContent = eTs <= sTs ? '0m' : '—'; return; }
+  const mins = Math.round((eTs - sTs) / 60000);
+  const h = Math.floor(mins / 60), m = mins % 60;
+  disp.textContent = h > 0 ? h + 'h ' + m + 'm' : m + 'm';
+}
+
+function timeToTs(timeStr, dateStr) {
+  if (!timeStr) return null;
+  const [h,m] = timeStr.split(':').map(Number);
+  // Parse dateStr as local date, not UTC
+  const parts = dateStr.split('-').map(Number);
+  const d = new Date(parts[0], parts[1]-1, parts[2], h, m, 0, 0);
+  return d.getTime();
+}
+
 function logActivity() {
   if(!selActType){showToast('Select an activity type');return;}
   let actType=selActType;
   if(actType==='Other'){const ot=document.getElementById('act-other-text').value.trim();actType=ot||'Other';}
-  const dur=document.getElementById('act-duration').value;
-  S.activities.push({id:uid(),ts:Date.now(),date:today(),actType,duration:dur?parseInt(dur):null,exertion:selExertion,notes:document.getElementById('act-notes').value.trim()});
+  const startVal  = document.getElementById('act-start').value;
+  const endVal    = document.getElementById('act-end').value;
+  const startDate = document.getElementById('act-start-date').value || today();
+  const endDate   = (document.getElementById('act-end-date') && document.getElementById('act-end-date').value) ? document.getElementById('act-end-date').value : startDate;
+  const startTs   = timeToTs(startVal, startDate) || Date.now();
+  const endTs     = timeToTs(endVal, endDate) || null;
+  const durInt    = (startTs && endTs && endTs > startTs) ? Math.round((endTs - startTs) / 60000) : null;
+  const ts = startTs;
+  S.activities.push({id:uid(),ts,date:startDate,actType,duration:durInt,startTs,endTs,exertion:selExertion,notes:document.getElementById('act-notes').value.trim()});
   sv('bsp_activities',S.activities);
-  ['act-duration','act-notes','act-other-text'].forEach(id=>document.getElementById(id).value='');
+  ['act-notes','act-other-text','act-start','act-end','act-start-date','act-end-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); const dd=document.getElementById('act-duration-display');if(dd)dd.textContent='—'; 
   selActType=null; selExertion=2; render(); showToast('Activity logged');
 }
 
+// suppTaken structure: { suppId: [ {date, ts}, ... ] }
 function toggleSupp(id) {
-  const arr = S.suppTaken[id] || [];
+  const arr = (S.suppTakenLog||{})[id] || [];
   const t = today();
-  if (arr.includes(t)) S.suppTaken[id] = arr.filter(d=>d!==t);
-  else S.suppTaken[id] = [...arr, t];
-  sv('bsp_supp_taken',S.suppTaken); render();
+  const existing = arr.find(e=>e.date===t);
+  if (existing) {
+    S.suppTakenLog[id] = arr.filter(e=>e.date!==t);
+  } else {
+    S.suppTakenLog[id] = [...arr, {date:t, ts:Date.now()}];
+  }
+  sv('bsp_supp_taken_log', S.suppTakenLog);
+  // Keep legacy suppTaken in sync for export
+  const dates = (S.suppTakenLog[id]||[]).map(e=>e.date);
+  S.suppTaken[id] = dates;
+  sv('bsp_supp_taken', S.suppTaken);
+  render();
 }
-// Helper: was supplement taken on a given date?
 function suppTakenOn(suppId, date) {
+  if (S.suppTakenLog) {
+    return (S.suppTakenLog[suppId]||[]).some(e=>e.date===date);
+  }
   return (S.suppTaken[suppId]||[]).includes(date);
+}
+function suppTakenTs(suppId, date) {
+  if (!S.suppTakenLog) return null;
+  const e = (S.suppTakenLog[suppId]||[]).find(x=>x.date===date);
+  return e ? e.ts : null;
 }
 
 function addSupplement() {
@@ -1363,6 +2008,46 @@ function addSupplement() {
   render();
 }
 
+function renderCustomActList() {
+  const el = document.getElementById('custom-act-list'); if(!el) return;
+  const all = [...ACT_TYPES.map(a=>({label:a.label, builtin:true})), ...S.customActTypes.map(a=>({label:a.label, builtin:false}))];
+  if (!all.length) { el.innerHTML=''; return; }
+  el.innerHTML = all.map((a,i)=>{
+    const safeLabel = a.label.replace(/'/g,"\\'");
+    return `<div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:var(--rs);padding:8px 12px;">
+      <span style="flex:1;font-size:14px;">${a.label}</span>
+      ${a.builtin
+        ? '<span style="font-size:11px;color:var(--text3);">default</span>'
+        : `<button class="edit-link" style="color:var(--crash-fg);" onclick="removeCustomActType('${safeLabel}')">Remove</button>`}
+    </div>`;}).join('');
+}
+
+function toggleDefaultActType(label, btn) {
+  if (!S.hiddenActTypes) S.hiddenActTypes = ld('bsp_hidden_act_types', []);
+  const idx = S.hiddenActTypes.indexOf(label);
+  if (idx > -1) { S.hiddenActTypes.splice(idx, 1); btn.textContent = 'Hide'; }
+  else           { S.hiddenActTypes.push(label);    btn.textContent = 'Show'; }
+  sv('bsp_hidden_act_types', S.hiddenActTypes);
+  render();
+}
+
+function addCustomActType() {
+  const name = document.getElementById('custom-act-name').value.trim(); if(!name) return;
+  if (ACT_TYPES.find(a=>a.label===name) || S.customActTypes.find(a=>a.label===name)) {
+    showToast('Already exists'); return;
+  }
+  S.customActTypes.push({label:name, icon:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'});
+  sv('bsp_custom_act_types', S.customActTypes);
+  document.getElementById('custom-act-name').value = '';
+  render();
+}
+
+function removeCustomActType(label) {
+  S.customActTypes = S.customActTypes.filter(a=>a.label!==label);
+  sv('bsp_custom_act_types', S.customActTypes);
+  render();
+}
+
 function saveBottleSize() { const v=parseInt(document.getElementById('settings-bottle').value); if(v>0){S.settings.bottleML=v;sv('bsp_settings',S.settings);render();} }
 function saveWaterTarget() { const v=parseInt(document.getElementById('settings-water-target').value); if(v>0){S.settings.waterTarget=v;sv('bsp_settings',S.settings);render();} }
 
@@ -1370,7 +2055,7 @@ function saveWaterTarget() { const v=parseInt(document.getElementById('settings-
 function buildExport(d) {
   const waterItems = S.water.filter(i=>i.date===d);
   // Include active crash if it started on this day and hasn't ended
-  const activeCrashForDay = (S.activeCrash && S.activeCrash.startTs && new Date(S.activeCrash.startTs).toISOString().slice(0,10)===d)
+  const activeCrashForDay = (S.activeCrash && S.activeCrash.startTs && (() => { const _d=new Date(S.activeCrash.startTs); return _d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0'); })()===d)
     ? [{...S.activeCrash, status:'active', date:d}] : [];
   const allCrashes = [...S.crashes.filter(i=>i.date===d), ...activeCrashForDay];
   return {
@@ -1386,6 +2071,8 @@ function buildExport(d) {
     salt_mg: S.salt.filter(i=>i.date===d).reduce((a,i)=>a+(i.mg||0),0),
     crashes: allCrashes,
     activities: S.activities.filter(i=>i.date===d),
+    drinks: S.drinks.filter(i=>i.date===d),
+    symptoms: S.symptoms.filter(i=>i.date===d),
     supplements: {
       definitions: S.supplements,
       taken: S.supplements.filter(s=>suppTakenOn(s.id,d)).map(s=>({id:s.id,name:s.name,dose:s.dose})),
@@ -1406,6 +2093,8 @@ function exportAllData() {
     ...S.crashes.map(i=>i.date),
     ...S.activities.map(i=>i.date),
     ...Object.keys(S.mood),
+    ...S.drinks.map(i=>i.date),
+    ...S.symptoms.map(i=>i.date),
   ]);
   // Also include today if anything active
   daySet.add(today());
@@ -1419,14 +2108,103 @@ function exportAllData() {
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mcas_pots_full_history_'+today()+'.json';a.click();
 }
+
+function editDrink(id) {
+  const existing=document.getElementById('edit-modal'); if(existing)existing.remove();
+  const item=S.drinks.find(d=>d.id===id); if(!item)return;
+  const modal=document.createElement('div'); modal.id='edit-modal'; modal.className='modal-bg';
+  const inner=document.createElement('div'); inner.className='modal-sheet';
+  inner.innerHTML=`<div class="modal-handle"></div><div class="modal-title">Edit drink</div>
+    <input type="text" id="ed-name" value="${item.name}" style="margin-bottom:8px;">
+    <input type="text" id="ed-amount" value="${item.amount||''}" placeholder="Amount" style="margin-bottom:8px;">
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <select id="ed-caff" style="flex:1;">
+        <option value="">Caffeine?</option>
+        <option value="none" ${item.caffeine==='none'?'selected':''}>None</option>
+        <option value="low" ${item.caffeine==='low'?'selected':''}>Low</option>
+        <option value="high" ${item.caffeine==='high'?'selected':''}>High</option>
+      </select>
+      <select id="ed-hist" style="flex:1;">
+        <option value="">Histamine?</option>
+        <option value="low" ${item.histamine==='low'?'selected':''}>Low</option>
+        <option value="medium" ${item.histamine==='medium'?'selected':''}>Medium</option>
+        <option value="high" ${item.histamine==='high'?'selected':''}>High</option>
+      </select>
+    </div>
+    <div class="when-row">
+      <div class="when-label">When</div>
+      <div class="dt-pair">
+        <input type="date" id="ed-date" value="${item.date||today()}">
+        <input type="time" id="ed-time" value="${item.ts?new Date(item.ts).toTimeString().slice(0,5):''}">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn-ghost" style="flex:1;" onclick="document.getElementById('edit-modal').remove()">Cancel</button>
+      <button class="btn-primary" style="flex:2;background:var(--water-fg);color:#fff;" id="ed-save">Save</button>
+    </div>`;
+  inner.querySelector('#ed-save').onclick=()=>{
+    const newDate = inner.querySelector('#ed-date').value || item.date;
+    const newTs = timeToTs(inner.querySelector('#ed-time').value, newDate) || item.ts;
+    S.drinks=S.drinks.map(d=>d.id===id?{...d,name:inner.querySelector('#ed-name').value.trim()||d.name,amount:inner.querySelector('#ed-amount').value,caffeine:inner.querySelector('#ed-caff').value,histamine:inner.querySelector('#ed-hist').value,date:newDate,ts:newTs||d.ts}:d);
+    sv('bsp_drinks',S.drinks); modal.remove(); render();
+  };
+  modal.appendChild(inner); document.body.appendChild(modal);
+}
+
+function editSymptom(id) {
+  const existing=document.getElementById('edit-modal'); if(existing)existing.remove();
+  const item=S.symptoms.find(s=>s.id===id); if(!item)return;
+  const modal=document.createElement('div'); modal.id='edit-modal'; modal.className='modal-bg';
+  const inner=document.createElement('div'); inner.className='modal-sheet';
+  let esSev = item.severity||3;
+  function rebuildEsSev() {
+    const row=inner.querySelector('#es-sev-row'); if(!row)return;
+    row.innerHTML='';
+    [1,2,3,4,5].forEach(n=>{const b=document.createElement('button');b.className='sev-btn'+(esSev===n?' sel':'');b.textContent=n;b.onclick=()=>{esSev=n;rebuildEsSev();};row.appendChild(b);});
+  }
+  inner.innerHTML=`<div class="modal-handle"></div><div class="modal-title">Edit symptom</div>
+    <input type="text" id="es-sym" value="${item.symptom||''}" placeholder="Symptom" style="margin-bottom:8px;">
+    <div class="when-row">
+      <div class="when-label">Start</div>
+      <div class="dt-pair">
+        <input type="date" id="es-date" value="${item.date||today()}">
+        <input type="time" id="es-start" value="${(item.startTs||item.ts)?new Date(item.startTs||item.ts).toTimeString().slice(0,5):''}">
+      </div>
+    </div>
+    <div class="when-row">
+      <div class="when-label">End</div>
+      <div class="dt-pair">
+        <input type="date" id="es-end-date" value="${item.date||today()}">
+        <input type="time" id="es-end" value="${item.endTs?new Date(item.endTs).toTimeString().slice(0,5):''}">
+      </div>
+    </div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px;">Severity</div>
+    <div class="sev-row" id="es-sev-row" style="margin-bottom:12px;"></div>
+    <input type="text" id="es-notes" value="${item.notes||''}" placeholder="Notes" style="margin-bottom:14px;">
+    <div style="display:flex;gap:10px;">
+      <button class="btn-ghost" style="flex:1;" onclick="document.getElementById('edit-modal').remove()">Cancel</button>
+      <button class="btn-primary" style="flex:2;background:var(--crash-fg);color:#fff;" id="es-save">Save</button>
+    </div>`;
+  rebuildEsSev();
+  inner.querySelector('#es-save').onclick=()=>{
+    const newDate  = inner.querySelector('#es-date').value || item.date || today();
+    const newStart = timeToTs(inner.querySelector('#es-start').value, newDate) || item.startTs;
+    const esEndDate = inner.querySelector('#es-end-date').value || newDate;
+    const newEnd   = timeToTs(inner.querySelector('#es-end').value, esEndDate) || item.endTs;
+    S.symptoms=S.symptoms.map(s=>s.id===id?{...s,symptom:inner.querySelector('#es-sym').value.trim()||s.symptom,severity:esSev,date:newDate,startTs:newStart,endTs:newEnd,ts:newStart||s.ts,notes:inner.querySelector('#es-notes').value.trim()}:s);
+    sv('bsp_symptoms',S.symptoms); modal.remove(); render();
+  };
+  modal.appendChild(inner); document.body.appendChild(modal);
+}
+
 function clearToday() {
   if(!confirm('Clear all of today\'s logs?'))return;
   const t=today();
-  ['food','water','salt','crashes','activities'].forEach(k=>{S[k]=S[k].filter(i=>i.date!==t);sv('bsp_'+k,S[k]);});
+  ['food','water','salt','crashes','activities','drinks','symptoms'].forEach(k=>{S[k]=S[k].filter(i=>i.date!==t);sv('bsp_'+k,S[k]);});
   // Clear mood for today
   delete S.mood[t]; sv('bsp_mood',S.mood);
   // Clear any active crash that started today
-  if (S.activeCrash && new Date(S.activeCrash.startTs).toISOString().slice(0,10)===t) {
+  if (S.activeCrash && S.activeCrash.startTs && (() => { const _d=new Date(S.activeCrash.startTs); return _d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0'); })()===t) {
     S.activeCrash=null; sv('bsp_active_crash',null);
   }
   render();
@@ -1442,6 +2220,157 @@ function showToast(msg) {
 }
 
 // ─── INIT ────────────────────────────────────────────────────────────
+
+// ─── SUPP LOG RENDER ─────────────────────────────────────────────────
+function renderSuppLog() {
+  const el = document.getElementById('supp-log-list');
+  if (!el) return;
+  if (!S.suppTakenLog) S.suppTakenLog = ld('bsp_supp_taken_log',{});
+  const todayEntries = [];
+  S.supplements.forEach(s => {
+    const entry = (S.suppTakenLog[s.id]||[]).find(e=>e.date===today());
+    if (entry) todayEntries.push({supp:s, ts:entry.ts});
+  });
+  todayEntries.sort((a,b)=>b.ts-a.ts);
+  if (!todayEntries.length) { el.innerHTML='<div style="padding:14px 0;font-size:13px;color:var(--text3);">None taken yet today</div>'; return; }
+  el.innerHTML = todayEntries.map(e=>`<div class="log-item">
+    ${logIcon('supplement')}
+    <div style="flex:1;"><div class="log-time">${fmt(e.ts)}</div><div class="log-main">${e.supp.name}</div><div class="log-sub">${e.supp.dose}</div></div>
+  </div>`).join('');
+}
+
+function renderSuppManage() {
+  const el = document.getElementById('supp-manage-list');
+  if (!el) return;
+  if (!S.supplements.length) { el.innerHTML='<div style="padding:14px 0;font-size:13px;color:var(--text3);">No supplements added yet</div>'; return; }
+  el.innerHTML = S.supplements.map(s=>`<div class="supp-row">
+    <div style="flex:1;">
+      <div style="font-size:14px;font-weight:500;">${s.name}</div>
+      <div style="font-size:12px;color:var(--text2);">${s.dose}</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="edit-link" onclick="editSuppDef('${s.id}')">Edit</button>
+      <button class="edit-link" style="color:var(--crash-fg);" onclick="deleteSuppDef('${s.id}')">Remove</button>
+    </div>
+  </div>`).join('');
+}
+
+function editSuppDef(id) {
+  const item = S.supplements.find(s=>s.id===id); if(!item)return;
+  const modal=document.createElement('div'); modal.className='modal-bg';
+  const inner=document.createElement('div'); inner.className='modal-sheet';
+  inner.innerHTML=`<div class="modal-handle"></div><div class="modal-title">Edit supplement</div>
+    <input type="text" id="esd-name" value="${item.name}" style="margin-bottom:8px;">
+    <input type="text" id="esd-dose" value="${item.dose||''}" placeholder="Dose" style="margin-bottom:14px;">
+    <div style="display:flex;gap:10px;">
+      <button class="btn-ghost" style="flex:1;" onclick="this.closest('.modal-bg').remove()">Cancel</button>
+      <button class="btn-primary" style="flex:2;background:var(--supp-fg);color:#fff;" id="esd-save">Save</button>
+    </div>`;
+  inner.querySelector('#esd-save').onclick=()=>{
+    S.supplements=S.supplements.map(s=>s.id===id?{...s,name:inner.querySelector('#esd-name').value.trim()||s.name,dose:inner.querySelector('#esd-dose').value.trim()}:s);
+    sv('bsp_supplements',S.supplements); modal.remove(); render();
+  };
+  modal.appendChild(inner); document.body.appendChild(modal);
+}
+
+function deleteSuppDef(id) {
+  if(!confirm('Remove this supplement?')) return;
+  S.supplements = S.supplements.filter(s=>s.id!==id);
+  sv('bsp_supplements',S.supplements); render();
+}
+
+// ─── SYMPTOM RENDER / LOGIC ───────────────────────────────────────────
+let selSymTypeVal = 'event';
+let selSymSev = 3;
+
+function setSymType(type) {
+  selSymTypeVal = type;
+  document.getElementById('sym-type-event').classList.toggle('active', type==='event');
+  document.getElementById('sym-type-allday').classList.toggle('active', type==='allday');
+  const stf = document.getElementById('sym-time-fields'); if(stf) stf.style.display = type==='event' ? 'block' : 'none';
+}
+
+function buildSymChipGrid() {
+  const el = document.getElementById('sym-chip-grid'); if(!el) return;
+  if (el.children.length > 0) return; // don't reset if already built
+  el.innerHTML = CRASH_SYMPTOMS.map(s=>`<button class="chip" onclick="this.classList.toggle('sel');document.getElementById('sym-custom').value='';"  data-sym="${s}">${s}</button>`).join('');
+}
+
+function buildSymSevRow() {
+  const el = document.getElementById('sym-sev-row'); if(!el) return;
+  el.innerHTML='';
+  [1,2,3,4,5].forEach(n=>{
+    const b=document.createElement('button');
+    b.className='sev-btn'+(selSymSev===n?' sel':'');
+    b.textContent=n;
+    b.onclick=()=>{selSymSev=n;buildSymSevRow();};
+    el.appendChild(b);
+  });
+}
+
+function logSymptom() {
+  const chips = [...(document.querySelectorAll('#sym-chip-grid .chip.sel')||[])].map(b=>b.getAttribute('data-sym'));
+  const custom = document.getElementById('sym-custom').value.trim();
+  const symptom = custom || chips.join(', ');
+  if (!symptom) { showToast('Select or describe a symptom'); return; }
+  const allDay = selSymTypeVal==='allday';
+  const startVal = document.getElementById('sym-start').value;
+  const endVal   = document.getElementById('sym-end').value;
+  const symStartDate = document.getElementById('sym-start-date') ? document.getElementById('sym-start-date').value || today() : today();
+  const symEndDate   = document.getElementById('sym-end-date')   ? document.getElementById('sym-end-date').value   || today() : today();
+  const ts = timeToTs(startVal, symStartDate) || Date.now();
+  S.symptoms.push({
+    id:uid(), ts, date:today(), symptom, severity:selSymSev,
+    allDay, startTs: allDay?null:ts,
+    endTs: allDay?null:timeToTs(endVal,symEndDate),
+    notes: document.getElementById('sym-notes').value.trim(),
+  });
+  sv('bsp_symptoms', S.symptoms);
+  ['sym-custom','sym-notes','sym-start','sym-end','sym-start-date','sym-end-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); 
+  document.querySelectorAll('#sym-chip-grid .chip.sel').forEach(b=>b.classList.remove('sel'));
+  selSymSev=3; buildSymSevRow();
+  render(); showToast('Symptom logged');
+}
+
+function renderSymptomLog() {
+  const el = document.getElementById('symptom-log-list'); if(!el) return;
+  const items = todayItems(S.symptoms).slice().reverse();
+  if (!items.length) { el.innerHTML='<div style="padding:14px 0;font-size:13px;color:var(--text3);">Nothing logged yet</div>'; return; }
+  el.innerHTML = items.map(i=>`<div class="log-item" style="cursor:pointer;" onclick="openItemDetail('symptom','${i.id}')">
+    ${logIcon('crash')}
+    <div style="flex:1;min-width:0;">
+      <div class="log-time">${i.allDay?'All day':fmt(i.ts)}</div>
+      <div class="log-main">${i.symptom}</div>
+      <div class="log-sub">Severity ${i.severity}/5${i.notes?' · '+i.notes:''}</div>
+    </div>
+    <svg style="flex-shrink:0;opacity:0.3;margin-left:8px;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </div>`).join('');
+}
+
+// ─── DRINKS ───────────────────────────────────────────────────────────
+function logDrink() {
+  const name = document.getElementById('drink-name').value.trim();
+  if (!name) { showToast('Enter drink name'); return; }
+  S.drinks.push({
+    id:uid(), ts:Date.now(), date:today(),
+    name, amount:document.getElementById('drink-amount').value.trim(),
+    caffeine:document.getElementById('drink-caffeine').value,
+    histamine:document.getElementById('drink-histamine').value,
+  });
+  sv('bsp_drinks',S.drinks);
+  ['drink-name','drink-amount'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('drink-caffeine').value='';
+  document.getElementById('drink-histamine').value='';
+  render(); showToast('Drink logged');
+}
+
+// ─── MOOD SKIP ────────────────────────────────────────────────────────
+function skipMood(period) {
+  if (!S.mood[today()]) S.mood[today()]={};
+  S.mood[today()][period] = 0; // 0 = skipped
+  sv('bsp_mood',S.mood);
+  render();
+}
 
 // ─── THEME ───────────────────────────────────────────────────────────
 function applyTheme(theme) {
@@ -1468,6 +2397,7 @@ function setTheme(theme) {
 
 applyTheme(S.settings.theme || 'auto');
 render();
+updateDateNav('home');
 </script>
 </body>
 </html>
